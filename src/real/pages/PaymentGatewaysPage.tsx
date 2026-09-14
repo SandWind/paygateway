@@ -625,9 +625,18 @@ function CreateChannelForm({ providers, csrfToken, reload, notify }: CreateChann
             <label className="form__label" htmlFor="create-channel-weight">
               渠道权重
             </label>
-            <output className="gateway-weight-field__value" htmlFor="create-channel-weight">
-              {routingWeight}
-            </output>
+            <input
+              className="gateway-weight-field__input"
+              data-testid="create-channel-weight-number"
+              type="number"
+              min="0"
+              max="10000"
+              step="1"
+              inputMode="numeric"
+              aria-label="渠道权重数值"
+              value={routingWeight}
+              onChange={(event) => setRoutingWeight(clampWeight(event.target.value))}
+            />
           </div>
           <input
             id="create-channel-weight"
