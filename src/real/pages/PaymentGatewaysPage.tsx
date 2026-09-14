@@ -166,6 +166,8 @@ export function PaymentGatewaysPage() {
   }, [])
   /** 展开配置面板的渠道 */
   const [openChannelId, setOpenChannelId] = useState<string | null>(null)
+  /** 正在提交启停切换的渠道 */
+  const [togglingChannelId, setTogglingChannelId] = useState<string | null>(null)
   /** 新建渠道抽屉（默认收起，避免创建表单长期占据首屏） */
   const [createOpen, setCreateOpen] = useState(false)
   const [providerOpen, setProviderOpen] = useState(false)
@@ -230,6 +232,50 @@ export function PaymentGatewaysPage() {
       setPhase('error')
     }
   }, [])
+
+  /** 渠道卡片上的启用 / 停用快捷切换（PATCH 带 expected_version 乐观锁 + 审计原因） */
+  const toggleChannelEnabled = useCallback(
+    async (row: PaymentChannelRow) => {
+      const channel = row.channel
+      const nextEnabled = !channel.is_enabled
+      setTogglingChannelId(channel.id)
+      try {
+        await apiRequest({
+          method: 'PATCH',
+          path: '/v1/admin/payment-gateways/channels',
+          body: {
+            channel_id: channel.id,
+            expected_version: channel.version,
+            environment: channel.environment,
+            is_enabled: nextEnabled,
+            routing_weight: channel.routing_weight,
+            name: channel.name,
+            pay_request_url: channel.pay_request_url,
+            pay_callback: channel.pay_callback,
+            default_payment_method: channel.default_payment_method,
+            reason: nextEnabled ? '渠道列表快捷启用' : '渠道列表快捷停用',
+          },
+          csrfToken,
+        })
+        notify(
+          nextEnabled
+            ? `渠道「${channel.channel_code}」已启用并重新参与路由`
+            : `渠道「${channel.channel_code}」已停用：只摘除新支付路由，历史渠道腿继续接收回调与查单`,
+        )
+        await reload()
+      } catch (err) {
+        if (err instanceof ApiError && err.code === 'PAYMENT_CONFIG_VERSION_CONFLICT') {
+          await reload()
+          notifyError('渠道配置已被其他管理员修改，列表已刷新；请基于最新版本重试')
+          return
+        }
+        notifyError(messageForApiError(err))
+      } finally {
+        setTogglingChannelId(null)
+      }
+    },
+    [csrfToken, notify, notifyError, reload],
+  )
 
   useEffect(() => {
     void reload()
@@ -350,7 +396,7 @@ export function PaymentGatewaysPage() {
                 <div className="gateway-reference-section__head gateway-reference-section__head--channels"><div><p>PAYMENT CHANNELS</p><h2>支付渠道</h2><span>渠道状态、支付权重与归一化流量</span></div><div className="gateway-section-actions"><label className="gateway-search"><span>⌕</span><input type="search" value={keyword} data-testid="channel-search" placeholder="搜索渠道" onChange={(event) => setKeyword(event.target.value)} /></label>{!readOnly ? <button type="button" className="btn btn--primary gateway-create-channel-btn" data-testid="create-channel-toggle" onClick={() => setCreateOpen(true)}>＋ 新增渠道</button> : null}</div></div>
                 <div className="gateway-filter-chips" role="group" aria-label="按生命周期筛选">{filters.map((filter) => <button key={filter.key} type="button" className={`gateway-chip${lifecycleFilter === filter.key ? ' is-active' : ''}`} aria-pressed={lifecycleFilter === filter.key} onClick={() => setLifecycleFilter(filter.key)}>{filter.label}<em>{filter.count}</em></button>)}</div>
                 <div className="gateway-channel-grid" data-testid="payment-channels-table">
-                  {visibleRows.map((row) => <article className={`gateway-channel-card is-${row.lifecycle}`} key={row.channel.id} data-testid={`payment-channel-${row.channel.channel_code}`}><header><div className={`gateway-provider-mark gateway-provider-mark--${row.channel.adapter_type}`}>{adapterMark(row.channel.adapter_type)}</div><div><strong>{row.channel.name || row.channel.channel_code}</strong><code>{row.channel.channel_code}</code></div><span className={lifecycleTagClass(row.lifecycle)}>{lifecycleText[row.lifecycle]}</span></header><div className="gateway-channel-facts"><div><span>Provider</span><strong>{row.channel.adapter_type}</strong></div><div><span>运行环境</span><strong>{row.channel.environment}</strong></div><div><span>READY 绑定</span><strong>{row.ready !== null ? `${row.ready.merchantName} · v${row.ready.versionNo}` : failedChannels.includes(row.channel.id) ? '查询失败' : '未就绪'}</strong></div></div><div className="gateway-channel-weight"><div><span>支付权重</span><strong>{row.channel.routing_weight}</strong><em>{row.sharePercent !== null ? `${formatSharePercent(row.sharePercent)} 流量` : '不参与路由'}</em></div><input type="range" min="0" max="10000" value={row.channel.routing_weight} readOnly aria-label={`${row.channel.channel_code} 当前支付权重`} /><small>进入配置后可拖动调整，保存需填写审计原因</small></div><footer><span>配置版本 v{row.channel.version}</span>{!readOnly ? <button type="button" className="btn btn--small btn--ghost" data-testid={`channel-config-toggle-${row.channel.channel_code}`} onClick={() => setOpenChannelId(row.channel.id)}>查看配置详情 →</button> : <span>只读</span>}</footer></article>)}
+                  {visibleRows.map((row) => <article className={`gateway-channel-card is-${row.lifecycle}`} key={row.channel.id} data-testid={`payment-channel-${row.channel.channel_code}`}><header><div className={`gateway-provider-mark gateway-provider-mark--${row.channel.adapter_type}`}>{adapterMark(row.channel.adapter_type)}</div><div><strong>{row.channel.name || row.channel.channel_code}</strong><code>{row.channel.channel_code}</code></div><span className={lifecycleTagClass(row.lifecycle)}>{lifecycleText[row.lifecycle]}</span></header><div className="gateway-channel-facts"><div><span>Provider</span><strong>{row.channel.adapter_type}</strong></div><div><span>运行环境</span><strong>{row.channel.environment}</strong></div><div><span>READY 绑定</span><strong>{row.ready !== null ? `${row.ready.merchantName} · v${row.ready.versionNo}` : failedChannels.includes(row.channel.id) ? '查询失败' : '未就绪'}</strong></div></div><div className="gateway-channel-weight"><div><span>支付权重</span><strong>{row.channel.routing_weight}</strong><em>{row.sharePercent !== null ? `${formatSharePercent(row.sharePercent)} 流量` : '不参与路由'}</em></div><input type="range" min="0" max="10000" value={row.channel.routing_weight} readOnly aria-label={`${row.channel.channel_code} 当前支付权重`} /><small>进入配置后可拖动调整，保存需填写审计原因</small></div><footer><span>配置版本 v{row.channel.version}</span>{!readOnly ? <div className="gateway-channel-card__actions">{row.lifecycle !== 'archived' ? <button type="button" className={`gateway-toggle${row.channel.is_enabled ? ' is-on' : ''}`} role="switch" aria-checked={row.channel.is_enabled} disabled={togglingChannelId === row.channel.id} data-testid={`channel-enable-toggle-${row.channel.channel_code}`} onClick={() => void toggleChannelEnabled(row)}><span className="gateway-toggle__track"><span className="gateway-toggle__knob" /></span><span className="gateway-toggle__label">{togglingChannelId === row.channel.id ? '切换中…' : row.channel.is_enabled ? '已启用' : '已停用'}</span></button> : <span>配置已冻结</span>}<button type="button" className="btn btn--small btn--ghost" data-testid={`channel-config-toggle-${row.channel.channel_code}`} onClick={() => setOpenChannelId(row.channel.id)}>编辑</button></div> : <span>只读</span>}</footer></article>)}
                 </div>
               </section>
             </> : null}

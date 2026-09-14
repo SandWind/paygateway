@@ -53,6 +53,7 @@ export async function apiRequest<T>(options: ApiOptions): Promise<ApiResult<T>> 
   // 预览环境：用内置模拟数据替代 admin-api（真实仓库走同源 /v1 代理）
   await new Promise((resolve) => setTimeout(resolve, 180))
   if (options.method !== 'GET') {
+    applyMockWrite(options)
     return { status: 200, data: { ok: true } as T }
   }
   const data = mockResponse(options.path)
@@ -132,6 +133,31 @@ const versionsByMerchant: Record<string, unknown[]> = {
   'm-m-1': [
     { id: 'mv-m-1', merchant_id: 'm-m-1', version_no: 1, status: 'READY', callback_key: 'cbk_m1f2', callback_url: 'https://api.example.com/v1/pay/callback/mock/cbk_m1f2', config_digest: 'cd04f977aa12b3e0', config: [ { key: 'endpoint', value: 'https://sandbox.mock.example/pay', secret: false } ], validated_at: '2026-04-11T02:40:00Z', created_at: '2026-04-11T02:30:00Z' },
   ],
+}
+
+/** 预览环境：把渠道写操作落到内存数据，让启停切换等交互可见 */
+function applyMockWrite(options: ApiOptions): void {
+  const body = (options.body ?? {}) as Record<string, unknown>
+  if (options.method === 'PATCH' && options.path.endsWith('/channels')) {
+    const target = channels.find((channel) => channel.id === body['channel_id'])
+    if (target) {
+      if (typeof body['is_enabled'] === 'boolean') target.is_enabled = body['is_enabled']
+      if (typeof body['routing_weight'] === 'number') target.routing_weight = body['routing_weight']
+      if (typeof body['environment'] === 'string') target.environment = body['environment']
+      if (typeof body['name'] === 'string') target.name = body['name']
+      target.version += 1
+    }
+    return
+  }
+  const actionMatch = /\/channels\/([^/]+)\/(disable|archive)$/.exec(options.path)
+  if (actionMatch) {
+    const target = channels.find((channel) => channel.id === actionMatch[1])
+    if (target) {
+      target.is_enabled = false
+      if (actionMatch[2] === 'archive') target.archived_at = '2026-09-14T00:00:00Z'
+      target.version += 1
+    }
+  }
 }
 
 function mockResponse(path: string): unknown {
