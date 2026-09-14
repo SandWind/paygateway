@@ -168,6 +168,9 @@ export function PaymentGatewaysPage() {
   const [openChannelId, setOpenChannelId] = useState<string | null>(null)
   /** 新建渠道抽屉（默认收起，避免创建表单长期占据首屏） */
   const [createOpen, setCreateOpen] = useState(false)
+  const [providerOpen, setProviderOpen] = useState(false)
+  const [merchantOpen, setMerchantOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   /** 渠道列表筛选（本地视图状态，不改变服务端读模型） */
   const [keyword, setKeyword] = useState('')
   const [lifecycleFilter, setLifecycleFilter] = useState<'all' | PaymentChannelRow['lifecycle']>('all')
@@ -279,308 +282,89 @@ export function PaymentGatewaysPage() {
     { key: 'disabled', label: '停用', count: rows.filter((row) => row.lifecycle === 'disabled').length },
     { key: 'archived', label: '已归档', count: rows.filter((row) => row.lifecycle === 'archived').length },
   ]
+  const merchantEntries = Object.entries(merchantsByChannel).flatMap(([channelId, merchants]) =>
+    merchants.map((merchant) => ({ merchant, channel: rows.find((row) => row.channel.id === channelId)?.channel ?? null })),
+  )
 
   return (
-    <section className="page gateway-page" data-testid="payment-gateways-page">
-      <header className="gateway-commandbar">
-        <div className="gateway-commandbar__identity">
-          <span className="gateway-kicker__mark" aria-hidden="true">PG</span>
-          <div>
-            <div className="gateway-kicker">
-              <span>PAYMENT CONTROL PLANE</span>
-              <span className="gateway-kicker__line" aria-hidden="true" />
-              <span>P0A</span>
+    <section className="gateway-page gateway-reference" data-testid="payment-gateways-page">
+      <div className={`gateway-admin-shell${sidebarOpen ? ' sidebar-open' : ''}`}>
+        <aside className="gateway-sidebar" aria-label="后台导航">
+          <div className="gateway-sidebar__brand"><span>VB</span><strong>VideoBot</strong></div>
+          <nav>
+            <a href="#summary"><span aria-hidden="true">⌂</span>工作台</a>
+            <a href="#summary"><span aria-hidden="true">▦</span>订单管理</a>
+            <a href="#providers" className="is-active"><span aria-hidden="true">◇</span>支付管理</a>
+            <a href="#merchants"><span aria-hidden="true">◎</span>商户配置</a>
+            <a href="#channels"><span aria-hidden="true">⇄</span>渠道路由</a>
+          </nav>
+          <div className="gateway-sidebar__user"><span>SA</span><div><strong>超级管理员</strong><small>SUPER_ADMIN</small></div></div>
+        </aside>
+        {sidebarOpen ? <button className="gateway-sidebar-scrim" type="button" aria-label="关闭导航" onClick={() => setSidebarOpen(false)} /> : null}
+
+        <main className="gateway-reference__main">
+          <header className="gateway-reference__topbar">
+            <button type="button" className="gateway-mobile-menu" aria-label="打开导航" onClick={() => setSidebarOpen(true)}>☰</button>
+            <div><span>支付管理</span><b>/</b><strong>支付网关配置</strong></div>
+            <div className="gateway-topbar-status"><GatewaySignal state={signalState} label={signalLabel} /><button type="button" onClick={() => void reload()} disabled={phase === 'loading'} aria-label="刷新配置">↻</button></div>
+          </header>
+
+          <div className="gateway-reference__content">
+            <div className="gateway-reference__heading" id="summary">
+              <div><p>PAYMENT GATEWAY MANAGEMENT</p><h1>支付接入配置</h1><span>统一管理 Provider、商户凭据与渠道流量分配</span></div>
+              <div className="gateway-reference__security"><span>●</span> 强认证保护 · Secret 永不回显</div>
             </div>
-            <h1 className="gateway-commandbar__title">支付网关</h1>
-            <p className="gateway-commandbar__desc">渠道绑定、商户版本与流量权重的唯一配置入口；密钥只写入、永不回显。</p>
+
+            <div className="gateway-statstrip" aria-label="支付网关摘要">
+              <GatewayMetric label="已登记 Provider" value={providers.length.toString().padStart(2, '0')} detail={`${adapterTypes.length} 个适配器已注册`} tone="gold" />
+              <GatewayMetric label="支付商户" value={merchantCount.toString().padStart(2, '0')} detail={`${merchantEntries.filter(({ merchant }) => merchant.status === 'ENABLED').length} 个正在启用`} tone="green" />
+              <GatewayMetric label="启用渠道" value={enabledRows.length.toString().padStart(2, '0')} detail={`${weightedRows.length} 个参与路由`} tone="gold" />
+              <GatewayMetric label="READY 版本" value={readyRows.length.toString().padStart(2, '0')} detail={notReadyRows.length > 0 ? `${notReadyRows.length} 个渠道待处理` : '全部配置正常'} tone={notReadyRows.length > 0 ? 'red' : 'muted'} />
+            </div>
+
+            {notice !== null ? <div className="gateway-notice"><Alert kind="success">{notice}</Alert></div> : null}
+            {pageError !== null ? <div className="gateway-notice"><Alert kind="error">{pageError}</Alert></div> : null}
+
+            {readOnly ? <div className="gateway-readonly" data-testid="readonly-forbidden-notice"><span className="gateway-readonly__icon">◌</span><div><strong>只读观察模式</strong><p>当前角色只能查看脱敏配置，写操作需要超级管理员。</p></div><span className="gateway-readonly__lock">SERVER ENFORCED</span></div> : null}
+
+            {phase === 'loading' ? <div className="gateway-state-card gateway-state-card--loading"><div className="gateway-state-card__spinner" /><div><strong>正在同步渠道配置</strong><span>读取 Provider、渠道与商户版本…</span></div></div> : null}
+
+            {phase === 'error' ? <div className="gateway-state-card gateway-state-card--error"><div className="gateway-state-card__icon">!</div><div><strong>配置同步失败</strong><span>{loadError}</span></div><button type="button" className="btn btn--ghost" onClick={() => void reload()}>重新连接</button></div> : null}
+
+            {phase === 'ready' ? <>
+              <section className="gateway-reference-section" id="providers">
+                <div className="gateway-reference-section__head"><div><p>PROVIDER REGISTRY</p><h2>Provider 列表</h2><span>支付协议与适配器登记</span></div>{!readOnly ? <button type="button" className="btn btn--primary" data-testid="create-provider-toggle" onClick={() => setProviderOpen(true)}>＋ 新增 Provider</button> : null}</div>
+                <div className="gateway-provider-grid">
+                  {providers.map((provider) => { const bound = rows.filter((row) => row.channel.provider_id === provider.id); return <article className="gateway-provider-card" key={provider.id}><div className="gateway-provider-card__top"><div className={`gateway-provider-mark gateway-provider-mark--${provider.adapter_type}`}>{adapterMark(provider.adapter_type)}</div><div className="gateway-provider-card__id"><strong>{provider.name}</strong><span>{provider.provider_code}</span></div><span className="tag tag--published">已接入</span></div><dl className="gateway-provider-card__meta"><div><dt>适配器类型</dt><dd>{provider.adapter_type}</dd></div><div><dt>支付渠道</dt><dd>{bound.length} 个</dd></div><div><dt>配置版本</dt><dd>v{provider.version}</dd></div></dl><footer><span>更新于 {formatDateTimeKL(provider.updated_at)}</span><button type="button" onClick={() => setLifecycleFilter('all')}>查看详情 →</button></footer></article> })}
+                </div>
+              </section>
+
+              <section className="gateway-reference-section" id="merchants">
+                <div className="gateway-reference-section__head"><div><p>MERCHANT ACCOUNTS</p><h2>支付商户</h2><span>商户号、渠道编码与凭据版本</span></div>{!readOnly ? <button type="button" className="btn btn--primary" data-testid="create-merchant-toggle" onClick={() => setMerchantOpen(true)} disabled={rows.length === 0}>＋ 新增商户</button> : null}</div>
+                <div className="gateway-merchant-summary-grid">
+                  {merchantEntries.map(({ merchant, channel }) => <article className="gateway-merchant-summary" key={merchant.id}><header><div><strong>{merchant.name}</strong><code>{merchant.merchant_number}</code></div><span className={merchant.status === 'ENABLED' ? 'tag tag--published' : 'tag tag--draft'}>{merchant.status === 'ENABLED' ? '已启用' : '已停用'}</span></header><dl><div><dt>所属渠道</dt><dd>{channel?.name || channel?.channel_code || '—'}</dd></div><div><dt>支付宝编码</dt><dd>{merchant.alipay_number || '—'}</dd></div><div><dt>微信编码</dt><dd>{merchant.wechatpay_number || '—'}</dd></div><div><dt>凭据版本</dt><dd>{merchant.ready_version !== null ? `READY · v${merchant.ready_version.version_no}` : '尚未就绪'}</dd></div></dl><footer><span>{merchant.ready_version !== null ? `摘要 ${shortDigest(merchant.ready_version.config_digest)}` : '需要提交凭据版本'}</span>{!readOnly && channel !== null ? <button type="button" onClick={() => setOpenChannelId(channel.id)}>管理凭据 →</button> : null}</footer></article>)}
+                </div>
+              </section>
+
+              <section className="gateway-reference-section" id="channels">
+                <div className="gateway-reference-section__head gateway-reference-section__head--channels"><div><p>PAYMENT CHANNELS</p><h2>支付渠道</h2><span>渠道状态、支付权重与归一化流量</span></div><div className="gateway-section-actions"><label className="gateway-search"><span>⌕</span><input type="search" value={keyword} data-testid="channel-search" placeholder="搜索渠道" onChange={(event) => setKeyword(event.target.value)} /></label>{!readOnly ? <button type="button" className="btn btn--primary" data-testid="create-channel-toggle" onClick={() => setCreateOpen(true)}>＋ 新增渠道</button> : null}</div></div>
+                <div className="gateway-filter-chips" role="group" aria-label="按生命周期筛选">{filters.map((filter) => <button key={filter.key} type="button" className={`gateway-chip${lifecycleFilter === filter.key ? ' is-active' : ''}`} aria-pressed={lifecycleFilter === filter.key} onClick={() => setLifecycleFilter(filter.key)}>{filter.label}<em>{filter.count}</em></button>)}</div>
+                <div className="gateway-channel-grid" data-testid="payment-channels-table">
+                  {visibleRows.map((row) => <article className={`gateway-channel-card is-${row.lifecycle}`} key={row.channel.id} data-testid={`payment-channel-${row.channel.channel_code}`}><header><div className={`gateway-provider-mark gateway-provider-mark--${row.channel.adapter_type}`}>{adapterMark(row.channel.adapter_type)}</div><div><strong>{row.channel.name || row.channel.channel_code}</strong><code>{row.channel.channel_code}</code></div><span className={lifecycleTagClass(row.lifecycle)}>{lifecycleText[row.lifecycle]}</span></header><div className="gateway-channel-facts"><div><span>Provider</span><strong>{row.channel.adapter_type}</strong></div><div><span>运行环境</span><strong>{row.channel.environment}</strong></div><div><span>READY 绑定</span><strong>{row.ready !== null ? `${row.ready.merchantName} · v${row.ready.versionNo}` : failedChannels.includes(row.channel.id) ? '查询失败' : '未就绪'}</strong></div></div><div className="gateway-channel-weight"><div><span>支付权重</span><strong>{row.channel.routing_weight}</strong><em>{row.sharePercent !== null ? `${formatSharePercent(row.sharePercent)} 流量` : '不参与路由'}</em></div><input type="range" min="0" max="10000" value={row.channel.routing_weight} readOnly aria-label={`${row.channel.channel_code} 当前支付权重`} /><small>进入配置后可拖动调整，保存需填写审计原因</small></div><footer><span>配置版本 v{row.channel.version}</span>{!readOnly ? <button type="button" className="btn btn--small btn--ghost" data-testid={`channel-config-toggle-${row.channel.channel_code}`} onClick={() => setOpenChannelId(row.channel.id)}>查看配置详情 →</button> : <span>只读</span>}</footer></article>)}
+                </div>
+              </section>
+            </> : null}
           </div>
-        </div>
-
-        <div className="gateway-commandbar__status" aria-label="支付网关运行状态">
-          <GatewaySignal state={signalState} label={signalLabel} />
-          <div className="gateway-commandbar__statusmeta">
-            <span>LIVE / {weightedRows.length > 0 ? `W${routeWeight}` : 'IDLE'}</span>
-            <span>更新：{rows[0] !== undefined ? formatDateTimeKL(rows[0].channel.updated_at) : '等待同步'}</span>
-          </div>
-        </div>
-
-        <div className="gateway-commandbar__actions">
-          <button
-            type="button"
-            className="btn btn--ghost gateway-refresh"
-            onClick={() => void reload()}
-            disabled={phase === 'loading'}
-            aria-label="刷新支付网关配置"
-          >
-            <span aria-hidden="true">↻</span>
-            刷新
-          </button>
-          {!readOnly ? (
-            <button
-              type="button"
-              className="btn btn--primary gateway-create-toggle"
-              data-testid="create-channel-toggle"
-              aria-expanded={createOpen}
-              onClick={() => setCreateOpen((prev) => !prev)}
-            >
-              <span aria-hidden="true">{createOpen ? '−' : '+'}</span>
-              {createOpen ? '收起新建' : '新建渠道'}
-            </button>
-          ) : (
-            <span className="gateway-readonly-action">只读视图</span>
-          )}
-        </div>
-      </header>
-
-      <div className="gateway-statstrip" aria-label="支付网关摘要">
-        <GatewayMetric label="渠道总数" value={rows.length.toString().padStart(2, '0')} detail={`${enabledRows.length} 个正在启用`} tone="gold" />
-        <GatewayMetric label="可用路由" value={eligibleRows.length.toString().padStart(2, '0')} detail={`${weightedRows.length} 个有权重 · 总权重 ${routeWeight}`} tone="green" />
-        <GatewayMetric label="READY 版本" value={readyRows.length.toString().padStart(2, '0')} detail={`${merchantCount} 个商户实体`} tone="gold" />
-        <GatewayMetric label="需处理" value={notReadyRows.length.toString().padStart(2, '0')} detail={notReadyRows.length > 0 ? '启用但尚未就绪' : '没有阻塞项'} tone={notReadyRows.length > 0 ? 'red' : 'muted'} />
+        </main>
       </div>
 
-      {notice !== null ? <div className="gateway-notice"><Alert kind="success">{notice}</Alert></div> : null}
-      {pageError !== null ? <div className="gateway-notice"><Alert kind="error">{pageError}</Alert></div> : null}
+      {providerOpen ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal" role="dialog" aria-modal="true" aria-label="新增 Provider"><header><div><p>PROVIDER REGISTRY</p><h2>新增 Provider</h2></div><button type="button" aria-label="关闭" onClick={() => setProviderOpen(false)}>×</button></header><form className="form" onSubmit={(event) => { event.preventDefault(); setProviderOpen(false); notify('Provider 登记由后端配置流程完成') }}><div className="form__field"><label className="form__label" htmlFor="provider-code">Provider 编码</label><input id="provider-code" placeholder="例如：flrqfpay" /></div><div className="form__field"><label className="form__label" htmlFor="provider-name">Provider 名称</label><input id="provider-name" placeholder="例如：FlrqfPay" /></div><div className="form__field"><label className="form__label" htmlFor="provider-note">接入说明</label><textarea id="provider-note" rows={4} placeholder="填写支付协议、回调方式与接入注意事项" /></div><div className="gateway-modal__note">Provider 协议绑定创建后不可变，正式登记由服务端配置流程完成。</div><div className="gateway-modal__actions"><button type="button" className="btn btn--ghost" onClick={() => setProviderOpen(false)}>取消</button><button type="submit" className="btn btn--primary">确认登记</button></div></form></div></div> : null}
 
-      {readOnly ? (
-        <div className="gateway-readonly" data-testid="readonly-forbidden-notice">
-          <span className="gateway-readonly__icon" aria-hidden="true">◌</span>
-          <div>
-            <strong>只读观察模式</strong>
-            <p>当前角色为 SUPPORT_OPERATOR：可查看脱敏配置与运行绑定，配置变更需要超级管理员。</p>
-          </div>
-          <span className="gateway-readonly__lock">SERVER ENFORCED</span>
-        </div>
-      ) : null}
+      {merchantOpen && rows[0] !== undefined ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal gateway-modal--wide" role="dialog" aria-modal="true" aria-label="新增支付商户"><header><div><p>MERCHANT ACCOUNT</p><h2>新增支付商户</h2></div><button type="button" aria-label="关闭" onClick={() => setMerchantOpen(false)}>×</button></header><CreateMerchantForm channelId={rows[0].channel.id} csrfToken={csrfToken} reload={reload} notify={notify} /></div></div> : null}
 
-      {phase === 'loading' ? (
-        <div className="gateway-state-card gateway-state-card--loading">
-          <div className="gateway-state-card__spinner" aria-hidden="true" />
-          <div><strong>正在同步渠道配置</strong><span>读取适配器目录、渠道与商户 READY 版本…</span></div>
-        </div>
-      ) : null}
+      {createOpen ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal gateway-modal--wide" role="dialog" aria-modal="true" aria-label="新增支付渠道"><header><div><p>PAYMENT CHANNEL</p><h2>新增支付渠道</h2></div><button type="button" aria-label="关闭" onClick={() => setCreateOpen(false)}>×</button></header><CreateChannelForm providers={providers} csrfToken={csrfToken} reload={reload} notify={notify} /></div></div> : null}
 
-      {phase === 'error' ? (
-        <div className="gateway-state-card gateway-state-card--error">
-          <div className="gateway-state-card__icon" aria-hidden="true">!</div>
-          <div><strong>配置同步失败</strong><span>{loadError}</span></div>
-          <button type="button" className="btn btn--ghost" onClick={() => void reload()}>重新连接</button>
-        </div>
-      ) : null}
-
-      {phase === 'ready' ? (
-        <>
-          {!readOnly && createOpen ? (
-            <CreateChannelForm providers={providers} csrfToken={csrfToken} reload={reload} notify={notify} />
-          ) : null}
-
-          <section className="gateway-section gateway-section--providers" aria-label="已登记 Provider">
-            <div className="gateway-section__header">
-              <div>
-                <div className="gateway-section__eyebrow">PROVIDER REGISTRY</div>
-                <h2>已登记 Provider</h2>
-              </div>
-              <span className="gateway-section__hint">渠道创建前必须先绑定已登记 Provider</span>
-            </div>
-            {providers.length === 0 ? (
-              <div className="gateway-inline-empty">Provider 清单为空：渠道必须绑定已登记的 Provider。</div>
-            ) : (
-              <div className="gateway-provider-grid">
-                {providers.map((provider) => {
-                  const bound = rows.filter((row) => row.channel.provider_id === provider.id)
-                  const enabled = bound.filter((row) => row.channel.is_enabled).length
-                  return (
-                    <article className="gateway-provider-card" key={provider.id}>
-                      <div className="gateway-provider-card__top">
-                        <div className={`gateway-provider-mark gateway-provider-mark--${provider.adapter_type}`} aria-hidden="true">{adapterMark(provider.adapter_type)}</div>
-                        <div className="gateway-provider-card__id">
-                          <strong>{provider.name}</strong>
-                          <span>{provider.provider_code}</span>
-                        </div>
-                        <span className="gateway-provider-card__version">v{provider.version}</span>
-                      </div>
-                      <dl className="gateway-provider-card__meta">
-                        <div><dt>适配器</dt><dd>{provider.adapter_type}</dd></div>
-                        <div><dt>绑定渠道</dt><dd>{bound.length} 个{bound.length > 0 ? ` · ${enabled} 个启用` : ''}</dd></div>
-                        <div><dt>最近更新</dt><dd>{formatDateTimeKL(provider.updated_at)}</dd></div>
-                      </dl>
-                    </article>
-                  )
-                })}
-              </div>
-            )}
-          </section>
-
-          <div className={`gateway-workbench${openRow !== null && !readOnly ? ' gateway-workbench--inspecting' : ''}`}>
-            <section className="gateway-column gateway-column--list">
-              <div className="gateway-column__header">
-                <div>
-                  <div className="gateway-section__eyebrow">ROUTING MATRIX</div>
-                  <h2>渠道路由矩阵</h2>
-                </div>
-                <span className="gateway-section__hint">权重越高，抽签命中区间越大</span>
-              </div>
-
-              <div className="gateway-toolbar">
-                <label className="gateway-search">
-                  <span aria-hidden="true">⌕</span>
-                  <input
-                    type="search"
-                    value={keyword}
-                    data-testid="channel-search"
-                    placeholder="搜索渠道代码 / 适配器 / 环境"
-                    onChange={(event) => setKeyword(event.target.value)}
-                    aria-label="搜索渠道"
-                  />
-                </label>
-                <div className="gateway-filter-chips" role="group" aria-label="按生命周期筛选">
-                  {filters.map((filter) => (
-                    <button
-                      key={filter.key}
-                      type="button"
-                      className={`gateway-chip${lifecycleFilter === filter.key ? ' is-active' : ''}`}
-                      aria-pressed={lifecycleFilter === filter.key}
-                      onClick={() => setLifecycleFilter(filter.key)}
-                    >
-                      {filter.label}
-                      <em>{filter.count}</em>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {rows.length === 0 ? (
-                <div className="gateway-empty" data-testid="channels-empty">
-                  <div className="gateway-empty__seal" aria-hidden="true">PG</div>
-                  <strong>尚未配置支付渠道</strong>
-                  <span>创建渠道、配置商户版本并完成校验后，支付入口才会出现可用路由。</span>
-                </div>
-              ) : visibleRows.length === 0 ? (
-                <div className="gateway-inline-empty">没有符合当前筛选条件的渠道。</div>
-              ) : (
-                <ul className="gateway-channel-list" data-testid="payment-channels-table">
-                  {visibleRows.map((row) => {
-                    const selected = openRow?.channel.id === row.channel.id
-                    return (
-                      <li key={row.channel.id} data-testid={`payment-channel-${row.channel.channel_code}`}>
-                        <article className={`gateway-channel-card${selected ? ' is-selected' : ''} is-${row.lifecycle}`}>
-                          <div className="gateway-channel-card__head">
-                            <div className={`gateway-provider-mark gateway-provider-mark--${row.channel.adapter_type}`} aria-hidden="true">{adapterMark(row.channel.adapter_type)}</div>
-                            <div className="gateway-channel-copy">
-                              <div className="gateway-channel-name-row">
-                                <strong>{row.channel.channel_code}</strong>
-                                <span className={lifecycleTagClass(row.lifecycle)}>{lifecycleText[row.lifecycle]}</span>
-                              </div>
-                              <div className="gateway-channel-meta">
-                                <code>{row.channel.adapter_type}</code><span>·</span><span>{row.channel.environment}</span>
-                                <span>·</span><span>{formatDateTimeKL(row.channel.updated_at)}</span><code>v{row.channel.version}</code>
-                              </div>
-                            </div>
-                            {!readOnly ? (
-                              <button
-                                type="button"
-                                className="btn btn--small btn--ghost gateway-config-button"
-                                data-testid={`channel-config-toggle-${row.channel.channel_code}`}
-                                onClick={() => setOpenChannelId((prev) => (prev === row.channel.id ? null : row.channel.id))}
-                              >
-                                <span>{selected ? '收起' : '配置'}</span><span aria-hidden="true">{selected ? '↑' : '↗'}</span>
-                              </button>
-                            ) : (
-                              <span className="gateway-readonly-action">只读</span>
-                            )}
-                          </div>
-
-                          <div className="gateway-channel-card__body">
-                            <div className="gateway-channel-metric">
-                              <span className="gateway-cell-label">路由权重</span>
-                              <div className="gateway-weight-line">
-                                <strong>{row.channel.routing_weight}</strong>
-                                <em>{row.sharePercent !== null ? formatSharePercent(row.sharePercent) : '不参与'}</em>
-                              </div>
-                              <div className="gateway-route-bar" aria-label={`流量占比 ${row.sharePercent !== null ? formatSharePercent(row.sharePercent) : '不参与路由'}`}>
-                                <span style={{ width: `${Math.max(0, Math.min(100, row.sharePercent ?? 0))}%` }} />
-                              </div>
-                            </div>
-                            <div className="gateway-channel-binding">
-                              <span className="gateway-cell-label">
-                                <i className={`gateway-binding-dot ${row.ready !== null ? 'is-ready' : row.notReady ? 'is-warning' : 'is-muted'}`} aria-hidden="true" />
-                                当前 READY 绑定
-                              </span>
-                              {row.ready !== null ? (
-                                <strong>{row.ready.merchantName} <small>v{row.ready.versionNo} · {shortDigest(row.ready.configDigest)}</small></strong>
-                              ) : failedChannels.includes(row.channel.id) ? (
-                                <strong className="gateway-cell-alert">版本查询失败</strong>
-                              ) : row.notReady ? (
-                                <strong className="gateway-cell-alert">配置未就绪</strong>
-                              ) : (
-                                <strong className="gateway-cell-muted">暂无启用绑定</strong>
-                              )}
-                            </div>
-                          </div>
-                        </article>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </section>
-
-            <aside className="gateway-column gateway-column--rail">
-              {openRow !== null && !readOnly ? (
-                <div className="gateway-inspector">
-                  <div className="gateway-inspector__bar">
-                    <span>CHANNEL INSPECTOR</span>
-                    <button type="button" className="gateway-inspector__close" onClick={() => setOpenChannelId(null)} aria-label="关闭配置面板">✕</button>
-                  </div>
-                  <ChannelConfigPanel
-                    key={`${openRow.channel.id}:${openRow.channel.version}`}
-                    row={openRow}
-                    merchants={merchantsByChannel[openRow.channel.id] ?? []}
-                    adapterTypes={adapterTypes}
-                    csrfToken={csrfToken}
-                    reload={reload}
-                    notify={notify}
-                    notifyError={notifyError}
-                  />
-                </div>
-              ) : (
-                <>
-                  <section className="gateway-section gateway-section--adapters">
-                    <div className="gateway-section__header gateway-section__header--compact">
-                      <div><div className="gateway-section__eyebrow">ADAPTER REGISTRY</div><h2>已注册适配器</h2></div>
-                      <span className="gateway-section__hint">编译期注册</span>
-                    </div>
-                    {adapterTypes.length === 0 ? (
-                      <div className="gateway-inline-empty">适配器目录暂不可用，请刷新重试。</div>
-                    ) : (
-                      <div className="gateway-adapter-grid">
-                        {adapterTypes.map((adapter) => (
-                          <article className="gateway-adapter-card" key={adapter.provider}>
-                            <div className="gateway-adapter-card__top"><div className="gateway-provider-mark gateway-provider-mark--small">{adapterMark(adapter.provider)}</div><strong>{adapter.provider}</strong><span className="gateway-adapter-card__state">REGISTERED</span></div>
-                            <div className="gateway-adapter-card__details"><span>回调：{adapter.callbackMethods.join(' / ') || '—'}</span><span>币种：{adapter.supportedCurrencies.join(' · ') || '—'}</span></div>
-                            <div className="gateway-adapter-card__schema">{adapter.configSchema.length} 个配置字段 · Secret 只写入</div>
-                          </article>
-                        ))}
-                      </div>
-                    )}
-                  </section>
-
-                  <section className="gateway-section gateway-section--runbook">
-                    <div className="gateway-section__header gateway-section__header--compact">
-                      <div><div className="gateway-section__eyebrow">OPERATING RULES</div><h2>运行规则</h2></div>
-                    </div>
-                    <ul className="gateway-runbook">
-                      <li><span>01</span><p><strong>支付拉起 ≠ 付款成功</strong><br />只有验签事实才会进入 userpay。</p></li>
-                      <li><span>02</span><p><strong>历史绑定优先</strong><br />停用渠道仍保留回调与查单能力。</p></li>
-                      <li><span>03</span><p><strong>Secret 不回显</strong><br />当前页面只展示脱敏摘要和版本指纹。</p></li>
-                    </ul>
-                  </section>
-                </>
-              )}
-            </aside>
-          </div>
-        </>
-      ) : null}
+      {openRow !== null && !readOnly ? <div className="gateway-modal-layer gateway-modal-layer--inspector" role="presentation"><div className="gateway-modal gateway-modal--inspector" role="dialog" aria-modal="true" aria-label={`${openRow.channel.channel_code} 渠道配置`}><header><div><p>CHANNEL CONFIGURATION</p><h2>{openRow.channel.name || openRow.channel.channel_code}</h2></div><button type="button" aria-label="关闭" onClick={() => setOpenChannelId(null)}>×</button></header><div className="gateway-modal__scroll"><ChannelConfigPanel key={`${openRow.channel.id}:${openRow.channel.version}`} row={openRow} merchants={merchantsByChannel[openRow.channel.id] ?? []} adapterTypes={adapterTypes} csrfToken={csrfToken} reload={reload} notify={notify} notifyError={notifyError} /></div></div></div> : null}
     </section>
   )
 }
