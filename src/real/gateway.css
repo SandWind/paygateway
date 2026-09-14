@@ -2407,6 +2407,58 @@ body {
   max-width: 420px;
   margin-top: 8px;
 }
+.gateway-modal .gateway-create-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.gateway-modal .gateway-create-card .gateway-form-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.gateway-modal .gateway-create-card .form__field {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 420px;
+  align-items: flex-start;
+}
+.gateway-modal .gateway-create-card .form__label,
+.gateway-modal .gateway-create-card .form__error,
+.gateway-modal .gateway-create-card .form input,
+.gateway-modal .gateway-create-card .form select,
+.gateway-modal .gateway-create-card .form textarea {
+  width: 100%;
+}
+.gateway-modal .gateway-create-card .gateway-form-reason {
+  align-self: center;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 14px;
+}
+.gateway-modal .gateway-create-card .gateway-weight-field {
+  align-self: center;
+  justify-content: flex-start;
+  max-width: 420px;
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.gateway-modal .gateway-create-card .gateway-weight-field__heading,
+.gateway-modal .gateway-create-card .gateway-weight-field__scale {
+  padding: 0 2px;
+}
+
+.gateway-modal .gateway-create-card .gateway-form-actions {
+  justify-content: flex-end;
+  align-self: center;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 8px;
+}
+
 .gateway-modal .form__field { display: grid; gap: 7px; }
 .gateway-modal .form__label { color: #8fa6b7; font-family: "Work Sans", sans-serif; font-size: 11px; }
 .gateway-modal .form input, .gateway-modal .form select, .gateway-modal .form textarea { width: 100%; min-height: 40px; padding: 9px 11px; border: 1px solid var(--gateway-line); border-radius: 6px; color: var(--gateway-text); background: #050f1c; outline: none; }
