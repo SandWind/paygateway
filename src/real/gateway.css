@@ -2330,6 +2330,7 @@ body {
 .gateway-reference .btn--primary { border-color: var(--gateway-cyan); color: #031116; background: var(--gateway-cyan); font-weight: 700; box-shadow: 0 0 16px rgba(32,202,218,.13); }
 .gateway-reference .btn:hover:not(:disabled) { border-color: var(--gateway-cyan); color: var(--gateway-cyan-strong); }
 .gateway-reference .btn--primary:hover:not(:disabled) { color: #031116; background: var(--gateway-cyan-strong); }
+.gateway-create-channel-btn { white-space: nowrap; flex-shrink: 0; }
 .gateway-reference .gateway-provider-grid, .gateway-merchant-summary-grid, .gateway-channel-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .gateway-reference .gateway-provider-card, .gateway-merchant-summary, .gateway-reference .gateway-channel-card { min-width: 0; padding: 16px; border: 1px solid var(--gateway-line); border-radius: 8px; background: var(--gateway-panel); box-shadow: none; }
 .gateway-reference .gateway-provider-card:hover, .gateway-merchant-summary:hover, .gateway-reference .gateway-channel-card:hover { border-color: rgba(32,202,218,.45); transform: none; background: var(--gateway-panel-raised); }
