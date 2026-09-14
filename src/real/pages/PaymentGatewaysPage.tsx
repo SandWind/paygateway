@@ -874,15 +874,15 @@ function EditChannelForm({
   }
 
   return (
-      <form
-      className="form gateway-inline-form gateway-edit-form"
+    <form
+      className="form gateway-inline-form gateway-edit-form gateway-merchant-form"
       data-testid="edit-channel-form"
       onSubmit={(event) => {
         event.preventDefault()
         void submit()
       }}
     >
-      <div className="form__row gateway-form-grid gateway-form-grid--edit">
+      <div className="form__row gateway-form-grid gateway-form-grid--merchant">
         <div className="form__field">
           <label className="form__label" htmlFor="edit-channel-name">
             渠道展示名（留空使用渠道代码）
@@ -986,19 +986,19 @@ function EditChannelForm({
             启用渠道（启用要求该渠道存在启用商户的 READY 版本）
           </label>
         </div>
-      </div>
-      <div className="form__field">
-        <label className="form__label" htmlFor="edit-channel-reason">
-          操作原因（必填，将写入审计；乐观锁版本 v{channel.version}）
-        </label>
-        <input
-          id="edit-channel-reason"
-          data-testid="edit-channel-reason"
-          value={reason}
-          placeholder="例如：调整主渠道权重"
-          onChange={(event) => setReason(event.target.value)}
-        />
-        {errors.reason !== undefined ? <p className="form__error">{errors.reason}</p> : null}
+        <div className="form__field">
+          <label className="form__label" htmlFor="edit-channel-reason">
+            操作原因（必填，将写入审计；乐观锁版本 v{channel.version}）
+          </label>
+          <input
+            id="edit-channel-reason"
+            data-testid="edit-channel-reason"
+            value={reason}
+            placeholder="例如：调整主渠道权重"
+            onChange={(event) => setReason(event.target.value)}
+          />
+          {errors.reason !== undefined ? <p className="form__error">{errors.reason}</p> : null}
+        </div>
       </div>
       {serverError !== null ? <Alert kind="error">{serverError}</Alert> : null}
       <div className="stack stack--row gateway-form-actions">
@@ -1009,6 +1009,7 @@ function EditChannelForm({
     </form>
   )
 }
+
 
 // ---- 新建商户 ----
 
