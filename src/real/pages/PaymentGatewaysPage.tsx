@@ -675,7 +675,6 @@ function CreateChannelForm({ providers, csrfToken, reload, notify }: CreateChann
 
 interface ChannelConfigPanelProps {
   row: PaymentChannelRow
-  merchants: PaymentMerchantView[]
   adapterTypes: PaymentAdapterTypeView[]
   csrfToken: string
   reload: () => Promise<void>
@@ -683,7 +682,7 @@ interface ChannelConfigPanelProps {
   notifyError: (message: string) => void
 }
 
-function ChannelConfigPanel({ row, merchants, adapterTypes, csrfToken, reload, notify, notifyError }: ChannelConfigPanelProps) {
+function ChannelConfigPanel({ row, adapterTypes, csrfToken, reload, notify, notifyError }: ChannelConfigPanelProps) {
   const { refresh } = useAdminSession()
   const channel = row.channel
   const schema = adapterSchemaFor(adapterTypes, channel.adapter_type)
