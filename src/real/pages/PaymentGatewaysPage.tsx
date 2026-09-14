@@ -102,6 +102,14 @@ const versionStatusText: Record<string, string> = {
   RETIRED: '已退休',
 }
 
+function clampWeight(raw: string): string {
+  if (raw.trim() === '') return ''
+  const digits = raw.replace(/[^0-9]/g, '')
+  if (digits === '') return ''
+  const value = Math.min(10000, Math.max(0, Number(digits)))
+  return String(value)
+}
+
 function adapterMark(provider: string): string {
   const normalized = provider.replace(/[^a-z0-9]/gi, '')
   return (normalized.slice(0, 2) || 'PG').toUpperCase()
@@ -625,9 +633,18 @@ function CreateChannelForm({ providers, csrfToken, reload, notify }: CreateChann
             <label className="form__label" htmlFor="create-channel-weight">
               渠道权重
             </label>
-            <output className="gateway-weight-field__value" htmlFor="create-channel-weight">
-              {routingWeight}
-            </output>
+            <input
+              className="gateway-weight-field__input"
+              data-testid="create-channel-weight-number"
+              type="number"
+              min="0"
+              max="10000"
+              step="1"
+              inputMode="numeric"
+              aria-label="渠道权重数值"
+              value={routingWeight}
+              onChange={(event) => setRoutingWeight(clampWeight(event.target.value))}
+            />
           </div>
           <input
             id="create-channel-weight"
@@ -637,7 +654,7 @@ function CreateChannelForm({ providers, csrfToken, reload, notify }: CreateChann
             min="0"
             max="10000"
             step="1"
-            value={routingWeight}
+            value={routingWeight === '' ? '0' : routingWeight}
             aria-valuetext={`${routingWeight} / 10000`}
             onChange={(event) => setRoutingWeight(event.target.value)}
           />
@@ -902,9 +919,18 @@ function EditChannelForm({
             <label className="form__label" htmlFor="edit-channel-weight">
               渠道权重
             </label>
-            <output className="gateway-weight-field__value" htmlFor="edit-channel-weight">
-              {routingWeight}
-            </output>
+            <input
+              className="gateway-weight-field__input"
+              data-testid="edit-channel-weight-number"
+              type="number"
+              min="0"
+              max="10000"
+              step="1"
+              inputMode="numeric"
+              aria-label="渠道权重数值"
+              value={routingWeight}
+              onChange={(event) => setRoutingWeight(clampWeight(event.target.value))}
+            />
           </div>
           <input
             id="edit-channel-weight"
@@ -914,7 +940,7 @@ function EditChannelForm({
             min="0"
             max="10000"
             step="1"
-            value={routingWeight}
+            value={routingWeight === '' ? '0' : routingWeight}
             aria-valuetext={`${routingWeight} / 10000`}
             onChange={(event) => setRoutingWeight(event.target.value)}
           />
