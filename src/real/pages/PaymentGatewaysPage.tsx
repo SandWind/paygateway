@@ -835,13 +835,14 @@ function EditChannelForm({
 
   return (
     <form
-      className="form gateway-inline-form gateway-edit-form gateway-merchant-form"
+      className="form gateway-edit-form gateway-merchant-form"
       data-testid="edit-channel-form"
       onSubmit={(event) => {
         event.preventDefault()
         void submit()
       }}
     >
+
       <div className="form__row gateway-form-grid gateway-form-grid--merchant">
         <div className="form__field">
           <label className="form__label" htmlFor="edit-channel-name">
