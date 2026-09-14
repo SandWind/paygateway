@@ -139,9 +139,15 @@ function mockResponse(path: string): unknown {
   if (path.endsWith('/adapter-types')) return adapterTypes
   if (path.endsWith('/channels')) return { channels }
   const merchantsMatch = /\/channels\/([^/]+)\/merchants$/.exec(path)
-  if (merchantsMatch) return { merchants: merchantsByChannel[merchantsMatch[1]] ?? [] }
+  if (merchantsMatch) {
+    const channelId = merchantsMatch[1]
+    if (channelId) return { merchants: merchantsByChannel[channelId] ?? [] }
+  }
   const versionsMatch = /\/merchants\/([^/]+)\/versions$/.exec(path)
-  if (versionsMatch) return { versions: versionsByMerchant[versionsMatch[1]] ?? [] }
+  if (versionsMatch) {
+    const merchantId = versionsMatch[1]
+    if (merchantId) return { versions: versionsByMerchant[merchantId] ?? [] }
+  }
   return {}
 }
 
