@@ -414,7 +414,7 @@ export function PaymentGatewaysPage() {
 
       {providerOpen ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal" role="dialog" aria-modal="true" aria-label="新增 Provider"><header><div><p>PROVIDER REGISTRY</p><h2>新增 Provider</h2></div><button type="button" aria-label="关闭" onClick={() => setProviderOpen(false)}>×</button></header><form className="form" onSubmit={(event) => { event.preventDefault(); setProviderOpen(false); notify('Provider 登记由后端配置流程完成') }}><div className="form__field"><label className="form__label" htmlFor="provider-code">Provider 编码</label><input id="provider-code" placeholder="例如：flrqfpay" /></div><div className="form__field"><label className="form__label" htmlFor="provider-name">Provider 名称</label><input id="provider-name" placeholder="例如：FlrqfPay" /></div><div className="form__field"><label className="form__label" htmlFor="provider-note">接入说明</label><textarea id="provider-note" rows={4} placeholder="填写支付协议、回调方式与接入注意事项" /></div><div className="gateway-modal__note">Provider 协议绑定创建后不可变，正式登记由服务端配置流程完成。</div><div className="gateway-modal__actions"><button type="button" className="btn btn--ghost" onClick={() => setProviderOpen(false)}>取消</button><button type="submit" className="btn btn--primary">确认登记</button></div></form></div></div> : null}
 
-      {merchantOpen && rows[0] !== undefined ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal gateway-modal--wide" role="dialog" aria-modal="true" aria-label="新增支付商户"><header><div><p>MERCHANT ACCOUNT</p><h2>新增支付商户</h2></div><button type="button" aria-label="关闭" onClick={() => setMerchantOpen(false)}>×</button></header><CreateMerchantForm channelId={rows[0].channel.id} csrfToken={csrfToken} reload={reload} notify={notify} /></div></div> : null}
+      {merchantOpen && rows[0] !== undefined ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal gateway-modal--wide" role="dialog" aria-modal="true" aria-label="新增支付商户"><header><div><p>MERCHANT ACCOUNT</p><h2>新增支付商户</h2></div><button type="button" aria-label="关闭" onClick={() => setMerchantOpen(false)}>×</button></header><CreateMerchantForm channelOptions={rows.filter((row) => row.lifecycle !== 'archived').map((row) => ({ id: row.channel.id, label: `${row.channel.name || row.channel.channel_code}（${row.channel.channel_code}）` }))} csrfToken={csrfToken} reload={reload} notify={notify} /></div></div> : null}
 
       {createOpen ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal gateway-modal--wide" role="dialog" aria-modal="true" aria-label="新增支付渠道"><header><div><p>PAYMENT CHANNEL</p><h2>新增支付渠道</h2></div><button type="button" aria-label="关闭" onClick={() => setCreateOpen(false)}>×</button></header><CreateChannelForm providers={providers} csrfToken={csrfToken} reload={reload} notify={notify} /></div></div> : null}
 
@@ -990,16 +990,17 @@ function EditChannelForm({
 // ---- 新建商户 ----
 
 function CreateMerchantForm({
-  channelId,
+  channelOptions,
   csrfToken,
   reload,
   notify,
 }: {
-  channelId: string
+  channelOptions: { id: string; label: string }[]
   csrfToken: string
   reload: () => Promise<void>
   notify: (message: string) => void
 }) {
+  const [channelId, setChannelId] = useState(channelOptions[0]?.id ?? '')
   const [name, setName] = useState('')
   const [merchantNumber, setMerchantNumber] = useState('')
   const [alipayNumber, setAlipayNumber] = useState('')
@@ -1066,6 +1067,23 @@ function CreateMerchantForm({
       }}
     >
       <div className="form__row gateway-form-grid gateway-form-grid--merchant">
+        <div className="form__field">
+          <label className="form__label" htmlFor="create-merchant-channel">
+            所属支付渠道（已配置渠道）
+          </label>
+          <select
+            id="create-merchant-channel"
+            data-testid="create-merchant-channel"
+            value={channelId}
+            onChange={(event) => setChannelId(event.target.value)}
+          >
+            {channelOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="form__field">
           <label className="form__label" htmlFor="create-merchant-name">
             新建商户名称 MerchantName（≤200 字符）
