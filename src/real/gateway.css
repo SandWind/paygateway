@@ -2467,6 +2467,16 @@ body {
 .gateway-modal .gateway-weight-field { background: #081a2a; }
 .gateway-modal__note { margin-top: 14px; color: var(--gateway-muted); font-size: 10px; line-height: 1.6; }
 .gateway-modal__actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--gateway-line-soft); }
+
+/* 渠道详情弹框：与新增商户弹框一致的居中单列 + 右对齐操作 */
+.gateway-modal .gateway-edit-form .gateway-weight-field { align-self: center; justify-content: flex-start; max-width: 420px; min-height: auto; padding: 0; border: 0; background: transparent; }
+.gateway-modal .gateway-edit-form .gateway-weight-field__heading,
+.gateway-modal .gateway-edit-form .gateway-weight-field__scale { padding: 0 2px; }
+.gateway-modal .gateway-edit-form .alert { align-self: center; width: 100%; max-width: 420px; margin-top: 14px; }
+.gateway-modal__danger-actions { display: flex; justify-content: flex-end; gap: 9px; width: 100%; max-width: 420px; margin: 14px auto 0; padding-top: 12px; border-top: 1px solid var(--gateway-line-soft); }
+.gateway-modal__danger-actions .btn { color: var(--gateway-red); border-color: rgba(237,123,123,.35); }
+.gateway-modal__archived { padding: 32px 20px; text-align: center; color: var(--gateway-muted); font-size: 13px; }
+
 .gateway-reference .modal-overlay { z-index: 100; background: rgba(2,7,14,.82); backdrop-filter: blur(8px); }
 .gateway-reference .modal { border-color: #25465f; color: var(--gateway-text); background: #091727; }
 
