@@ -410,7 +410,8 @@ export function PaymentGatewaysPage() {
 
       {createOpen ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal gateway-modal--wide" role="dialog" aria-modal="true" aria-label="新增支付渠道"><header><div><p>PAYMENT CHANNEL</p><h2>新增支付渠道</h2></div><button type="button" aria-label="关闭" onClick={() => setCreateOpen(false)}>×</button></header><CreateChannelForm providers={providers} csrfToken={csrfToken} reload={reload} notify={notify} /></div></div> : null}
 
-      {openRow !== null && !readOnly ? <div className="gateway-modal-layer gateway-modal-layer--inspector" role="presentation"><div className="gateway-modal gateway-modal--inspector" role="dialog" aria-modal="true" aria-label={`${openRow.channel.channel_code} 渠道配置`}><header><div><p>CHANNEL CONFIGURATION</p><h2>{openRow.channel.name || openRow.channel.channel_code}</h2></div><button type="button" aria-label="关闭" onClick={() => setOpenChannelId(null)}>×</button></header><div className="gateway-modal__scroll"><ChannelConfigPanel key={`${openRow.channel.id}:${openRow.channel.version}`} row={openRow} adapterTypes={adapterTypes} csrfToken={csrfToken} reload={reload} notify={notify} notifyError={notifyError} /></div></div></div> : null}
+      {openRow !== null && !readOnly ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal gateway-modal--wide" role="dialog" aria-modal="true" aria-label={`${openRow.channel.channel_code} 渠道配置`}><header><div><p>CHANNEL CONFIGURATION</p><h2>{openRow.channel.name || openRow.channel.channel_code}</h2></div><button type="button" aria-label="关闭" onClick={() => setOpenChannelId(null)}>×</button></header><ChannelConfigPanel key={`${openRow.channel.id}:${openRow.channel.version}`} row={openRow} adapterTypes={adapterTypes} csrfToken={csrfToken} reload={reload} notify={notify} notifyError={notifyError} /></div></div> : null}
+
     </section>
   )
 }
@@ -685,33 +686,20 @@ interface ChannelConfigPanelProps {
 function ChannelConfigPanel({ row, adapterTypes, csrfToken, reload, notify, notifyError }: ChannelConfigPanelProps) {
   const { refresh } = useAdminSession()
   const channel = row.channel
-  const schema = adapterSchemaFor(adapterTypes, channel.adapter_type)
   /** 危险操作目标（US-025：停用 / 归档经 ConfirmDialog + 强认证提权重试） */
   const [channelAction, setChannelAction] = useState<'disable' | 'archive' | null>(null)
   if (row.lifecycle === 'archived') {
-      return (
-      <section className="card section-card gateway-config-panel" data-testid="channel-config-panel">
-        <div className="gateway-config-heading">
-          <div><span className="gateway-section__eyebrow">ARCHIVED CHANNEL</span><h2 className="card__title">{channel.channel_code}</h2></div>
-          <span className="gateway-config-heading__identity">配置已冻结</span>
-        </div>
-        <p className="gateway-archive-note">该渠道已归档；历史渠道腿继续按原绑定接收回调与查单，新支付不会再进入此渠道。</p>
-      </section>
+    return (
+      <div className="gateway-modal__archived" data-testid="channel-config-panel">
+        <p>该渠道已归档；历史渠道腿继续按原绑定接收回调与查单，新支付不会再进入此渠道。</p>
+      </div>
     )
   }
   return (
-    <section className="card section-card gateway-config-panel" data-testid="channel-config-panel">
-      <div className="gateway-config-heading">
-        <div>
-          <span className="gateway-section__eyebrow">CHANNEL CONFIGURATION</span>
-          <h2 className="card__title">{channel.channel_code}</h2>
-        </div>
-        <div className="gateway-config-heading__identity"><code>{channel.adapter_type}</code><span>配置版本 v{channel.version}</span></div>
-      </div>
-
+    <>
       <EditChannelForm channel={channel} csrfToken={csrfToken} reload={reload} notify={notify} notifyError={notifyError} />
 
-      <div className="stack stack--row gateway-danger-actions">
+      <div className="gateway-modal__danger-actions">
         {channel.is_enabled ? (
           <button
             type="button"
@@ -759,37 +747,10 @@ function ChannelConfigPanel({ row, adapterTypes, csrfToken, reload, notify, noti
           }}
         />
       ) : null}
-
-      {channelAction !== null ? (
-        <ConfirmDialog
-          open
-          {...dangerousActionDialogSpec({
-            kind: channelAction === 'disable' ? 'disable-channel' : 'archive-channel',
-            channelCode: channel.channel_code,
-            adapterType: channel.adapter_type,
-          })}
-          csrfToken={csrfToken}
-          onClose={() => setChannelAction(null)}
-          onEscalated={() => void refresh()}
-          run={async (reason) => {
-            await apiRequest({
-              method: 'POST',
-              path: `/v1/admin/payment-gateways/channels/${channel.id}/${channelAction}`,
-              body: { expected_version: channel.version, reason },
-              csrfToken,
-            })
-            notify(
-              channelAction === 'disable'
-                ? '渠道已停用：只摘除新支付路由，历史渠道腿继续接收回调与查单'
-                : '渠道已归档，配置列已冻结；历史渠道腿继续按原绑定接收回调与查单',
-            )
-            await reload()
-          }}
-        />
-      ) : null}
-    </section>
+    </>
   )
 }
+
 
 // ---- 编辑渠道（环境 / 启用状态 / 权重 + 乐观锁 expected_version） ----
 
@@ -873,15 +834,16 @@ function EditChannelForm({
   }
 
   return (
-      <form
-      className="form gateway-inline-form gateway-edit-form"
+    <form
+      className="form gateway-edit-form gateway-merchant-form"
       data-testid="edit-channel-form"
       onSubmit={(event) => {
         event.preventDefault()
         void submit()
       }}
     >
-      <div className="form__row gateway-form-grid gateway-form-grid--edit">
+
+      <div className="form__row gateway-form-grid gateway-form-grid--merchant">
         <div className="form__field">
           <label className="form__label" htmlFor="edit-channel-name">
             渠道展示名（留空使用渠道代码）
@@ -985,19 +947,19 @@ function EditChannelForm({
             启用渠道（启用要求该渠道存在启用商户的 READY 版本）
           </label>
         </div>
-      </div>
-      <div className="form__field">
-        <label className="form__label" htmlFor="edit-channel-reason">
-          操作原因（必填，将写入审计；乐观锁版本 v{channel.version}）
-        </label>
-        <input
-          id="edit-channel-reason"
-          data-testid="edit-channel-reason"
-          value={reason}
-          placeholder="例如：调整主渠道权重"
-          onChange={(event) => setReason(event.target.value)}
-        />
-        {errors.reason !== undefined ? <p className="form__error">{errors.reason}</p> : null}
+        <div className="form__field">
+          <label className="form__label" htmlFor="edit-channel-reason">
+            操作原因（必填，将写入审计；乐观锁版本 v{channel.version}）
+          </label>
+          <input
+            id="edit-channel-reason"
+            data-testid="edit-channel-reason"
+            value={reason}
+            placeholder="例如：调整主渠道权重"
+            onChange={(event) => setReason(event.target.value)}
+          />
+          {errors.reason !== undefined ? <p className="form__error">{errors.reason}</p> : null}
+        </div>
       </div>
       {serverError !== null ? <Alert kind="error">{serverError}</Alert> : null}
       <div className="stack stack--row gateway-form-actions">
@@ -1008,6 +970,7 @@ function EditChannelForm({
     </form>
   )
 }
+
 
 // ---- 新建商户 ----
 
