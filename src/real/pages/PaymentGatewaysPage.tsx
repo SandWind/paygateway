@@ -410,7 +410,8 @@ export function PaymentGatewaysPage() {
 
       {createOpen ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal gateway-modal--wide" role="dialog" aria-modal="true" aria-label="新增支付渠道"><header><div><p>PAYMENT CHANNEL</p><h2>新增支付渠道</h2></div><button type="button" aria-label="关闭" onClick={() => setCreateOpen(false)}>×</button></header><CreateChannelForm providers={providers} csrfToken={csrfToken} reload={reload} notify={notify} /></div></div> : null}
 
-      {openRow !== null && !readOnly ? <div className="gateway-modal-layer gateway-modal-layer--inspector" role="presentation"><div className="gateway-modal gateway-modal--inspector" role="dialog" aria-modal="true" aria-label={`${openRow.channel.channel_code} 渠道配置`}><header><div><p>CHANNEL CONFIGURATION</p><h2>{openRow.channel.name || openRow.channel.channel_code}</h2></div><button type="button" aria-label="关闭" onClick={() => setOpenChannelId(null)}>×</button></header><div className="gateway-modal__scroll"><ChannelConfigPanel key={`${openRow.channel.id}:${openRow.channel.version}`} row={openRow} adapterTypes={adapterTypes} csrfToken={csrfToken} reload={reload} notify={notify} notifyError={notifyError} /></div></div></div> : null}
+      {openRow !== null && !readOnly ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal gateway-modal--wide" role="dialog" aria-modal="true" aria-label={`${openRow.channel.channel_code} 渠道配置`}><header><div><p>CHANNEL CONFIGURATION</p><h2>{openRow.channel.name || openRow.channel.channel_code}</h2></div><button type="button" aria-label="关闭" onClick={() => setOpenChannelId(null)}>×</button></header><ChannelConfigPanel key={`${openRow.channel.id}:${openRow.channel.version}`} row={openRow} adapterTypes={adapterTypes} csrfToken={csrfToken} reload={reload} notify={notify} notifyError={notifyError} /></div></div> : null}
+
     </section>
   )
 }
