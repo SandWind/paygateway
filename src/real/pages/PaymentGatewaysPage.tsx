@@ -686,8 +686,8 @@ interface ChannelConfigPanelProps {
 function ChannelConfigPanel({ row, adapterTypes, csrfToken, reload, notify, notifyError }: ChannelConfigPanelProps) {
   const { refresh } = useAdminSession()
   const channel = row.channel
-  /** 危险操作目标（US-025：停用 / 归档经 ConfirmDialog + 强认证提权重试） */
-  const [channelAction, setChannelAction] = useState<'disable' | 'archive' | null>(null)
+  /** 危险操作目标（US-025：停用经 ConfirmDialog + 强认证提权重试） */
+  const [disabling, setDisabling] = useState(false)
   if (row.lifecycle === 'archived') {
     return (
       <div className="gateway-modal__archived" data-testid="channel-config-panel">
@@ -699,50 +699,38 @@ function ChannelConfigPanel({ row, adapterTypes, csrfToken, reload, notify, noti
     <>
       <EditChannelForm channel={channel} csrfToken={csrfToken} reload={reload} notify={notify} notifyError={notifyError} />
 
-      <div className="gateway-modal__danger-actions">
-        {channel.is_enabled ? (
+      {channel.is_enabled ? (
+        <div className="gateway-modal__danger-actions">
           <button
             type="button"
             className="btn btn--small btn--ghost"
             data-testid="channel-disable"
-            onClick={() => setChannelAction('disable')}
+            onClick={() => setDisabling(true)}
           >
             停用渠道…
           </button>
-        ) : null}
-        <button
-          type="button"
-          className="btn btn--small btn--ghost"
-          data-testid="channel-archive"
-          onClick={() => setChannelAction('archive')}
-        >
-          归档渠道…
-        </button>
-      </div>
+        </div>
+      ) : null}
 
-      {channelAction !== null ? (
+      {disabling ? (
         <ConfirmDialog
           open
           {...dangerousActionDialogSpec({
-            kind: channelAction === 'disable' ? 'disable-channel' : 'archive-channel',
+            kind: 'disable-channel',
             channelCode: channel.channel_code,
             adapterType: channel.adapter_type,
           })}
           csrfToken={csrfToken}
-          onClose={() => setChannelAction(null)}
+          onClose={() => setDisabling(false)}
           onEscalated={() => void refresh()}
           run={async (reason) => {
             await apiRequest({
               method: 'POST',
-              path: `/v1/admin/payment-gateways/channels/${channel.id}/${channelAction}`,
+              path: `/v1/admin/payment-gateways/channels/${channel.id}/disable`,
               body: { expected_version: channel.version, reason },
               csrfToken,
             })
-            notify(
-              channelAction === 'disable'
-                ? '渠道已停用：只摘除新支付路由，历史渠道腿继续接收回调与查单'
-                : '渠道已归档，配置列已冻结；历史渠道腿继续按原绑定接收回调与查单',
-            )
+            notify('渠道已停用：只摘除新支付路由，历史渠道腿继续接收回调与查单')
             await reload()
           }}
         />
@@ -750,6 +738,7 @@ function ChannelConfigPanel({ row, adapterTypes, csrfToken, reload, notify, noti
     </>
   )
 }
+
 
 
 // ---- 编辑渠道（环境 / 启用状态 / 权重 + 乐观锁 expected_version） ----
