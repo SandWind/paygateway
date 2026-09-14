@@ -2497,3 +2497,50 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .gateway-sidebar, .gateway-reference .gateway-provider-card, .gateway-merchant-summary, .gateway-reference .gateway-channel-card { transition: none; }
 }
+
+/* 渠道卡片：启停开关 + 编辑按钮（右对齐） */
+.gateway-reference .gateway-channel-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.gateway-reference .gateway-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 200, 220, 0.28);
+  background: rgba(12, 26, 44, 0.75);
+  color: #8ba6c4;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.gateway-reference .gateway-toggle:disabled { cursor: progress; opacity: 0.7; }
+.gateway-reference .gateway-toggle__track {
+  position: relative;
+  width: 32px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(140, 165, 190, 0.32);
+  transition: background 0.18s ease;
+}
+.gateway-reference .gateway-toggle__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e6f1f8;
+  transition: transform 0.18s ease;
+}
+.gateway-reference .gateway-toggle.is-on {
+  border-color: rgba(45, 212, 191, 0.5);
+  color: #6ee7d7;
+}
+.gateway-reference .gateway-toggle.is-on .gateway-toggle__track { background: rgba(45, 212, 191, 0.85); }
+.gateway-reference .gateway-toggle.is-on .gateway-toggle__knob { transform: translateX(16px); }
+.gateway-reference .gateway-toggle:focus-visible { outline: 2px solid #2dd4bf; outline-offset: 2px; }
