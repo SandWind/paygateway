@@ -2387,9 +2387,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 .gateway-modal .gateway-merchant-form .form__field {
+  flex: 0 0 auto;
   width: 100%;
   max-width: 420px;
   align-items: flex-start;
@@ -2403,6 +2404,7 @@ body {
   justify-content: center;
   width: 100%;
   max-width: 420px;
+  margin-top: 8px;
 }
 .gateway-modal .form__field { display: grid; gap: 7px; }
 .gateway-modal .form__label { color: #8fa6b7; font-family: "Work Sans", sans-serif; font-size: 11px; }
