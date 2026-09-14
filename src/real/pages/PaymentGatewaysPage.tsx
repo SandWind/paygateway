@@ -761,27 +761,33 @@ function ChannelConfigPanel({ row, merchants, adapterTypes, csrfToken, reload, n
         />
       ) : null}
 
-      <div className="gateway-subsection-heading">
-        <div><span className="gateway-section__eyebrow">MERCHANTS &amp; VERSIONS</span><h3 className="card__title">商户与版本</h3></div>
-        <span>{merchants.length} 个商户 · 最多 1 个启用</span>
-      </div>
-      {schema === null ? (
-        <p className="state-hint">
-          适配器 {channel.adapter_type} 未注册（或清单加载失败），无法渲染商户版本表单；其余配置仍可编辑。
-        </p>
-      ) : null}
-      <CreateMerchantForm channelId={channel.id} csrfToken={csrfToken} reload={reload} notify={notify} />
-      {merchants.map((merchant) => (
-        <MerchantCard
-          key={`${merchant.id}:${merchant.updated_at}`}
-          merchant={merchant}
-          schema={schema}
+      {channelAction !== null ? (
+        <ConfirmDialog
+          open
+          {...dangerousActionDialogSpec({
+            kind: channelAction === 'disable' ? 'disable-channel' : 'archive-channel',
+            channelCode: channel.channel_code,
+            adapterType: channel.adapter_type,
+          })}
           csrfToken={csrfToken}
-          reload={reload}
-          notify={notify}
-          notifyError={notifyError}
+          onClose={() => setChannelAction(null)}
+          onEscalated={() => void refresh()}
+          run={async (reason) => {
+            await apiRequest({
+              method: 'POST',
+              path: `/v1/admin/payment-gateways/channels/${channel.id}/${channelAction}`,
+              body: { expected_version: channel.version, reason },
+              csrfToken,
+            })
+            notify(
+              channelAction === 'disable'
+                ? '渠道已停用：只摘除新支付路由，历史渠道腿继续接收回调与查单'
+                : '渠道已归档，配置列已冻结；历史渠道腿继续按原绑定接收回调与查单',
+            )
+            await reload()
+          }}
         />
-      ))}
+      ) : null}
     </section>
   )
 }
