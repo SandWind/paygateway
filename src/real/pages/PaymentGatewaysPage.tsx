@@ -990,16 +990,17 @@ function EditChannelForm({
 // ---- 新建商户 ----
 
 function CreateMerchantForm({
-  channelId,
+  channelOptions,
   csrfToken,
   reload,
   notify,
 }: {
-  channelId: string
+  channelOptions: { id: string; label: string }[]
   csrfToken: string
   reload: () => Promise<void>
   notify: (message: string) => void
 }) {
+  const [channelId, setChannelId] = useState(channelOptions[0]?.id ?? '')
   const [name, setName] = useState('')
   const [merchantNumber, setMerchantNumber] = useState('')
   const [alipayNumber, setAlipayNumber] = useState('')
