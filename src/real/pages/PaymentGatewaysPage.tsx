@@ -1068,6 +1068,23 @@ function CreateMerchantForm({
     >
       <div className="form__row gateway-form-grid gateway-form-grid--merchant">
         <div className="form__field">
+          <label className="form__label" htmlFor="create-merchant-channel">
+            所属支付渠道（已配置渠道）
+          </label>
+          <select
+            id="create-merchant-channel"
+            data-testid="create-merchant-channel"
+            value={channelId}
+            onChange={(event) => setChannelId(event.target.value)}
+          >
+            {channelOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form__field">
           <label className="form__label" htmlFor="create-merchant-name">
             新建商户名称 MerchantName（≤200 字符）
           </label>
