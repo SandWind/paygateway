@@ -654,7 +654,7 @@ function CreateChannelForm({ providers, csrfToken, reload, notify }: CreateChann
             min="0"
             max="10000"
             step="1"
-            value={routingWeight}
+            value={routingWeight === '' ? '0' : routingWeight}
             aria-valuetext={`${routingWeight} / 10000`}
             onChange={(event) => setRoutingWeight(event.target.value)}
           />
@@ -940,7 +940,7 @@ function EditChannelForm({
             min="0"
             max="10000"
             step="1"
-            value={routingWeight}
+            value={routingWeight === '' ? '0' : routingWeight}
             aria-valuetext={`${routingWeight} / 10000`}
             onChange={(event) => setRoutingWeight(event.target.value)}
           />
