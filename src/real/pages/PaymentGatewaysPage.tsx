@@ -102,6 +102,14 @@ const versionStatusText: Record<string, string> = {
   RETIRED: '已退休',
 }
 
+function clampWeight(raw: string): string {
+  if (raw.trim() === '') return ''
+  const digits = raw.replace(/[^0-9]/g, '')
+  if (digits === '') return ''
+  const value = Math.min(10000, Math.max(0, Number(digits)))
+  return String(value)
+}
+
 function adapterMark(provider: string): string {
   const normalized = provider.replace(/[^a-z0-9]/gi, '')
   return (normalized.slice(0, 2) || 'PG').toUpperCase()
