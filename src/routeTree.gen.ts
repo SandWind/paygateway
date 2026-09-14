@@ -10,80 +10,33 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProvidersRouteImport } from './routes/providers'
-import { Route as RecoveryRouteImport } from './routes/recovery'
-import { Route as ChannelsIndexRouteImport } from './routes/channels.index'
-import { Route as ChannelsChannelCodeRouteImport } from './routes/channels.$channelCode'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProvidersRoute = ProvidersRouteImport.update({
-  id: '/providers',
-  path: '/providers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecoveryRoute = RecoveryRouteImport.update({
-  id: '/recovery',
-  path: '/recovery',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChannelsIndexRoute = ChannelsIndexRouteImport.update({
-  id: '/channels/',
-  path: '/channels/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChannelsChannelCodeRoute = ChannelsChannelCodeRouteImport.update({
-  id: '/channels/$channelCode',
-  path: '/channels/$channelCode',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/providers': typeof ProvidersRoute
-  '/recovery': typeof RecoveryRoute
-  '/channels/$channelCode': typeof ChannelsChannelCodeRoute
-  '/channels/': typeof ChannelsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/providers': typeof ProvidersRoute
-  '/recovery': typeof RecoveryRoute
-  '/channels/$channelCode': typeof ChannelsChannelCodeRoute
-  '/channels': typeof ChannelsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/providers': typeof ProvidersRoute
-  '/recovery': typeof RecoveryRoute
-  '/channels/$channelCode': typeof ChannelsChannelCodeRoute
-  '/channels/': typeof ChannelsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    '/' | '/providers' | '/recovery' | '/channels/$channelCode' | '/channels/'
+  fullPaths: '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/providers' | '/recovery' | '/channels/$channelCode' | '/channels'
-  id:
-    | '__root__'
-    | '/'
-    | '/providers'
-    | '/recovery'
-    | '/channels/$channelCode'
-    | '/channels/'
+  to: '/'
+  id: '__root__' | '/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ProvidersRoute: typeof ProvidersRoute
-  RecoveryRoute: typeof RecoveryRoute
-  ChannelsChannelCodeRoute: typeof ChannelsChannelCodeRoute
-  ChannelsIndexRoute: typeof ChannelsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -95,43 +48,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/providers': {
-      id: '/providers'
-      path: '/providers'
-      fullPath: '/providers'
-      preLoaderRoute: typeof ProvidersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recovery': {
-      id: '/recovery'
-      path: '/recovery'
-      fullPath: '/recovery'
-      preLoaderRoute: typeof RecoveryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/channels/': {
-      id: '/channels/'
-      path: '/channels'
-      fullPath: '/channels/'
-      preLoaderRoute: typeof ChannelsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/channels/$channelCode': {
-      id: '/channels/$channelCode'
-      path: '/channels/$channelCode'
-      fullPath: '/channels/$channelCode'
-      preLoaderRoute: typeof ChannelsChannelCodeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ProvidersRoute: ProvidersRoute,
-  RecoveryRoute: RecoveryRoute,
-  ChannelsChannelCodeRoute: ChannelsChannelCodeRoute,
-  ChannelsIndexRoute: ChannelsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
