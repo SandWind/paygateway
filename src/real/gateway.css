@@ -2383,6 +2383,29 @@ body {
 .gateway-modal > .form, .gateway-modal > .gateway-create-card, .gateway-modal > .gateway-merchant-form { margin: 0; padding: 20px; border: 0; border-radius: 0; background: transparent; }
 .gateway-modal .gateway-form-heading { display: none; }
 .gateway-modal .gateway-create-card .gateway-form-grid, .gateway-modal .gateway-merchant-form .gateway-form-grid { margin-top: 0; }
+.gateway-modal .gateway-merchant-form .gateway-form-grid--merchant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.gateway-modal .gateway-merchant-form .form__field {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 420px;
+  align-items: flex-start;
+}
+.gateway-modal .gateway-merchant-form .form__label,
+.gateway-modal .gateway-merchant-form .form__error,
+.gateway-modal .gateway-merchant-form .form input {
+  width: 100%;
+}
+.gateway-modal .gateway-merchant-form .gateway-form-actions {
+  justify-content: center;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 8px;
+}
 .gateway-modal .form__field { display: grid; gap: 7px; }
 .gateway-modal .form__label { color: #8fa6b7; font-family: "Work Sans", sans-serif; font-size: 11px; }
 .gateway-modal .form input, .gateway-modal .form select, .gateway-modal .form textarea { width: 100%; min-height: 40px; padding: 9px 11px; border: 1px solid var(--gateway-line); border-radius: 6px; color: var(--gateway-text); background: #050f1c; outline: none; }
