@@ -231,6 +231,50 @@ export function PaymentGatewaysPage() {
     }
   }, [])
 
+  /** 渠道卡片上的启用 / 停用快捷切换（PATCH 带 expected_version 乐观锁 + 审计原因） */
+  const toggleChannelEnabled = useCallback(
+    async (row: PaymentChannelRow) => {
+      const channel = row.channel
+      const nextEnabled = !channel.is_enabled
+      setTogglingChannelId(channel.id)
+      try {
+        await apiRequest({
+          method: 'PATCH',
+          path: '/v1/admin/payment-gateways/channels',
+          body: {
+            channel_id: channel.id,
+            expected_version: channel.version,
+            environment: channel.environment,
+            is_enabled: nextEnabled,
+            routing_weight: channel.routing_weight,
+            name: channel.name,
+            pay_request_url: channel.pay_request_url,
+            pay_callback: channel.pay_callback,
+            default_payment_method: channel.default_payment_method,
+            reason: nextEnabled ? '渠道列表快捷启用' : '渠道列表快捷停用',
+          },
+          csrfToken,
+        })
+        notify(
+          nextEnabled
+            ? `渠道「${channel.channel_code}」已启用并重新参与路由`
+            : `渠道「${channel.channel_code}」已停用：只摘除新支付路由，历史渠道腿继续接收回调与查单`,
+        )
+        await reload()
+      } catch (err) {
+        if (err instanceof ApiError && err.code === 'PAYMENT_CONFIG_VERSION_CONFLICT') {
+          await reload()
+          notifyError('渠道配置已被其他管理员修改，列表已刷新；请基于最新版本重试')
+          return
+        }
+        notifyError(messageForApiError(err))
+      } finally {
+        setTogglingChannelId(null)
+      }
+    },
+    [csrfToken, notify, notifyError, reload],
+  )
+
   useEffect(() => {
     void reload()
   }, [reload])
