@@ -410,7 +410,7 @@ export function PaymentGatewaysPage() {
 
       {createOpen ? <div className="gateway-modal-layer" role="presentation"><div className="gateway-modal gateway-modal--wide" role="dialog" aria-modal="true" aria-label="新增支付渠道"><header><div><p>PAYMENT CHANNEL</p><h2>新增支付渠道</h2></div><button type="button" aria-label="关闭" onClick={() => setCreateOpen(false)}>×</button></header><CreateChannelForm providers={providers} csrfToken={csrfToken} reload={reload} notify={notify} /></div></div> : null}
 
-      {openRow !== null && !readOnly ? <div className="gateway-modal-layer gateway-modal-layer--inspector" role="presentation"><div className="gateway-modal gateway-modal--inspector" role="dialog" aria-modal="true" aria-label={`${openRow.channel.channel_code} 渠道配置`}><header><div><p>CHANNEL CONFIGURATION</p><h2>{openRow.channel.name || openRow.channel.channel_code}</h2></div><button type="button" aria-label="关闭" onClick={() => setOpenChannelId(null)}>×</button></header><div className="gateway-modal__scroll"><ChannelConfigPanel key={`${openRow.channel.id}:${openRow.channel.version}`} row={openRow} merchants={merchantsByChannel[openRow.channel.id] ?? []} adapterTypes={adapterTypes} csrfToken={csrfToken} reload={reload} notify={notify} notifyError={notifyError} /></div></div></div> : null}
+      {openRow !== null && !readOnly ? <div className="gateway-modal-layer gateway-modal-layer--inspector" role="presentation"><div className="gateway-modal gateway-modal--inspector" role="dialog" aria-modal="true" aria-label={`${openRow.channel.channel_code} 渠道配置`}><header><div><p>CHANNEL CONFIGURATION</p><h2>{openRow.channel.name || openRow.channel.channel_code}</h2></div><button type="button" aria-label="关闭" onClick={() => setOpenChannelId(null)}>×</button></header><div className="gateway-modal__scroll"><ChannelConfigPanel key={`${openRow.channel.id}:${openRow.channel.version}`} row={openRow} adapterTypes={adapterTypes} csrfToken={csrfToken} reload={reload} notify={notify} notifyError={notifyError} /></div></div></div> : null}
     </section>
   )
 }
@@ -675,7 +675,6 @@ function CreateChannelForm({ providers, csrfToken, reload, notify }: CreateChann
 
 interface ChannelConfigPanelProps {
   row: PaymentChannelRow
-  merchants: PaymentMerchantView[]
   adapterTypes: PaymentAdapterTypeView[]
   csrfToken: string
   reload: () => Promise<void>
@@ -683,7 +682,7 @@ interface ChannelConfigPanelProps {
   notifyError: (message: string) => void
 }
 
-function ChannelConfigPanel({ row, merchants, adapterTypes, csrfToken, reload, notify, notifyError }: ChannelConfigPanelProps) {
+function ChannelConfigPanel({ row, adapterTypes, csrfToken, reload, notify, notifyError }: ChannelConfigPanelProps) {
   const { refresh } = useAdminSession()
   const channel = row.channel
   const schema = adapterSchemaFor(adapterTypes, channel.adapter_type)
@@ -761,27 +760,33 @@ function ChannelConfigPanel({ row, merchants, adapterTypes, csrfToken, reload, n
         />
       ) : null}
 
-      <div className="gateway-subsection-heading">
-        <div><span className="gateway-section__eyebrow">MERCHANTS &amp; VERSIONS</span><h3 className="card__title">商户与版本</h3></div>
-        <span>{merchants.length} 个商户 · 最多 1 个启用</span>
-      </div>
-      {schema === null ? (
-        <p className="state-hint">
-          适配器 {channel.adapter_type} 未注册（或清单加载失败），无法渲染商户版本表单；其余配置仍可编辑。
-        </p>
-      ) : null}
-      <CreateMerchantForm channelId={channel.id} csrfToken={csrfToken} reload={reload} notify={notify} />
-      {merchants.map((merchant) => (
-        <MerchantCard
-          key={`${merchant.id}:${merchant.updated_at}`}
-          merchant={merchant}
-          schema={schema}
+      {channelAction !== null ? (
+        <ConfirmDialog
+          open
+          {...dangerousActionDialogSpec({
+            kind: channelAction === 'disable' ? 'disable-channel' : 'archive-channel',
+            channelCode: channel.channel_code,
+            adapterType: channel.adapter_type,
+          })}
           csrfToken={csrfToken}
-          reload={reload}
-          notify={notify}
-          notifyError={notifyError}
+          onClose={() => setChannelAction(null)}
+          onEscalated={() => void refresh()}
+          run={async (reason) => {
+            await apiRequest({
+              method: 'POST',
+              path: `/v1/admin/payment-gateways/channels/${channel.id}/${channelAction}`,
+              body: { expected_version: channel.version, reason },
+              csrfToken,
+            })
+            notify(
+              channelAction === 'disable'
+                ? '渠道已停用：只摘除新支付路由，历史渠道腿继续接收回调与查单'
+                : '渠道已归档，配置列已冻结；历史渠道腿继续按原绑定接收回调与查单',
+            )
+            await reload()
+          }}
         />
-      ))}
+      ) : null}
     </section>
   )
 }
