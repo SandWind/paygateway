@@ -374,6 +374,43 @@ export function PaymentGatewaysPage() {
             <CreateChannelForm providers={providers} csrfToken={csrfToken} reload={reload} notify={notify} />
           ) : null}
 
+          <section className="gateway-section gateway-section--providers" aria-label="已登记 Provider">
+            <div className="gateway-section__header">
+              <div>
+                <div className="gateway-section__eyebrow">PROVIDER REGISTRY</div>
+                <h2>已登记 Provider</h2>
+              </div>
+              <span className="gateway-section__hint">渠道创建前必须先绑定已登记 Provider</span>
+            </div>
+            {providers.length === 0 ? (
+              <div className="gateway-inline-empty">Provider 清单为空：渠道必须绑定已登记的 Provider。</div>
+            ) : (
+              <div className="gateway-provider-grid">
+                {providers.map((provider) => {
+                  const bound = rows.filter((row) => row.channel.provider_id === provider.id)
+                  const enabled = bound.filter((row) => row.channel.is_enabled).length
+                  return (
+                    <article className="gateway-provider-card" key={provider.id}>
+                      <div className="gateway-provider-card__top">
+                        <div className={`gateway-provider-mark gateway-provider-mark--${provider.adapter_type}`} aria-hidden="true">{adapterMark(provider.adapter_type)}</div>
+                        <div className="gateway-provider-card__id">
+                          <strong>{provider.name}</strong>
+                          <span>{provider.provider_code}</span>
+                        </div>
+                        <span className="gateway-provider-card__version">v{provider.version}</span>
+                      </div>
+                      <dl className="gateway-provider-card__meta">
+                        <div><dt>适配器</dt><dd>{provider.adapter_type}</dd></div>
+                        <div><dt>绑定渠道</dt><dd>{bound.length} 个{bound.length > 0 ? ` · ${enabled} 个启用` : ''}</dd></div>
+                        <div><dt>最近更新</dt><dd>{formatDateTimeKL(provider.updated_at)}</dd></div>
+                      </dl>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+
           <div className={`gateway-workbench${openRow !== null && !readOnly ? ' gateway-workbench--inspecting' : ''}`}>
             <section className="gateway-column gateway-column--list">
               <div className="gateway-column__header">

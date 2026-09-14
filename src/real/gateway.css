@@ -2188,3 +2188,75 @@ body {
 .drawer__timeline li {
   padding: var(--hy-space-1) 0;
 }
+
+/* ---- Provider 登记区（单页展示 Provider → 渠道 → 商户 → 版本） ---- */
+.gateway-section--providers {
+  margin-bottom: var(--hy-space-5);
+}
+.gateway-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--hy-space-4);
+}
+.gateway-provider-card {
+  border: 1px solid var(--gateway-line, var(--hy-color-border));
+  border-radius: var(--hy-radius-md);
+  background: var(--gateway-panel, var(--hy-color-surface));
+  padding: var(--hy-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--hy-space-3);
+  transition: border-color .2s ease, transform .2s ease;
+}
+.gateway-provider-card:hover {
+  border-color: var(--hy-color-primary);
+  transform: translateY(-1px);
+}
+.gateway-provider-card__top {
+  display: flex;
+  align-items: center;
+  gap: var(--hy-space-3);
+}
+.gateway-provider-card__id {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gateway-provider-card__id strong {
+  font-family: var(--hy-font-family-display);
+  font-size: var(--hy-font-size-md);
+  letter-spacing: .01em;
+}
+.gateway-provider-card__id span {
+  font-family: var(--hy-font-family-mono);
+  font-size: var(--hy-font-size-xs);
+  color: var(--hy-color-text-secondary);
+}
+.gateway-provider-card__version {
+  margin-left: auto;
+  font-family: var(--hy-font-family-mono);
+  font-size: var(--hy-font-size-xs);
+  color: var(--hy-color-primary);
+  border: 1px solid var(--gateway-line, var(--hy-color-border));
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+.gateway-provider-card__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--hy-space-2);
+  margin: 0;
+}
+.gateway-provider-card__meta dt {
+  font-size: var(--hy-font-size-xs);
+  color: var(--hy-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.gateway-provider-card__meta dd {
+  margin: 4px 0 0;
+  font-family: var(--hy-font-family-mono);
+  font-size: var(--hy-font-size-sm);
+  overflow-wrap: anywhere;
+}
