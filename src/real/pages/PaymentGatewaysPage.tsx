@@ -686,33 +686,20 @@ interface ChannelConfigPanelProps {
 function ChannelConfigPanel({ row, adapterTypes, csrfToken, reload, notify, notifyError }: ChannelConfigPanelProps) {
   const { refresh } = useAdminSession()
   const channel = row.channel
-  const schema = adapterSchemaFor(adapterTypes, channel.adapter_type)
   /** 危险操作目标（US-025：停用 / 归档经 ConfirmDialog + 强认证提权重试） */
   const [channelAction, setChannelAction] = useState<'disable' | 'archive' | null>(null)
   if (row.lifecycle === 'archived') {
-      return (
-      <section className="card section-card gateway-config-panel" data-testid="channel-config-panel">
-        <div className="gateway-config-heading">
-          <div><span className="gateway-section__eyebrow">ARCHIVED CHANNEL</span><h2 className="card__title">{channel.channel_code}</h2></div>
-          <span className="gateway-config-heading__identity">配置已冻结</span>
-        </div>
-        <p className="gateway-archive-note">该渠道已归档；历史渠道腿继续按原绑定接收回调与查单，新支付不会再进入此渠道。</p>
-      </section>
+    return (
+      <div className="gateway-modal__archived" data-testid="channel-config-panel">
+        <p>该渠道已归档；历史渠道腿继续按原绑定接收回调与查单，新支付不会再进入此渠道。</p>
+      </div>
     )
   }
   return (
-    <section className="card section-card gateway-config-panel" data-testid="channel-config-panel">
-      <div className="gateway-config-heading">
-        <div>
-          <span className="gateway-section__eyebrow">CHANNEL CONFIGURATION</span>
-          <h2 className="card__title">{channel.channel_code}</h2>
-        </div>
-        <div className="gateway-config-heading__identity"><code>{channel.adapter_type}</code><span>配置版本 v{channel.version}</span></div>
-      </div>
-
+    <>
       <EditChannelForm channel={channel} csrfToken={csrfToken} reload={reload} notify={notify} notifyError={notifyError} />
 
-      <div className="stack stack--row gateway-danger-actions">
+      <div className="gateway-modal__danger-actions">
         {channel.is_enabled ? (
           <button
             type="button"
@@ -760,37 +747,10 @@ function ChannelConfigPanel({ row, adapterTypes, csrfToken, reload, notify, noti
           }}
         />
       ) : null}
-
-      {channelAction !== null ? (
-        <ConfirmDialog
-          open
-          {...dangerousActionDialogSpec({
-            kind: channelAction === 'disable' ? 'disable-channel' : 'archive-channel',
-            channelCode: channel.channel_code,
-            adapterType: channel.adapter_type,
-          })}
-          csrfToken={csrfToken}
-          onClose={() => setChannelAction(null)}
-          onEscalated={() => void refresh()}
-          run={async (reason) => {
-            await apiRequest({
-              method: 'POST',
-              path: `/v1/admin/payment-gateways/channels/${channel.id}/${channelAction}`,
-              body: { expected_version: channel.version, reason },
-              csrfToken,
-            })
-            notify(
-              channelAction === 'disable'
-                ? '渠道已停用：只摘除新支付路由，历史渠道腿继续接收回调与查单'
-                : '渠道已归档，配置列已冻结；历史渠道腿继续按原绑定接收回调与查单',
-            )
-            await reload()
-          }}
-        />
-      ) : null}
-    </section>
+    </>
   )
 }
+
 
 // ---- 编辑渠道（环境 / 启用状态 / 权重 + 乐观锁 expected_version） ----
 
