@@ -21,7 +21,7 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -97,6 +97,10 @@ function Index() {
   const readOnly = role === "SUPPORT_OPERATOR";
   const visibleChannels = useMemo(() => channels.filter((channel) => `${channel.code} ${channel.provider} ${channel.merchant}`.toLowerCase().includes(query.toLowerCase())), [channels, query]);
 
+  useEffect(() => {
+    if (window.innerWidth < 768) setSidebarOpen(false);
+  }, []);
+
   const adjustWeight = (code: string, weight: number) => {
     setChannels((items) => items.map((item) => item.code === code ? { ...item, weight } : item));
   };
@@ -145,10 +149,10 @@ function Index() {
           <section className="mt-5 overflow-hidden rounded-md border border-border bg-card">
             <div className="flex items-center justify-between border-b border-border px-5 py-3.5"><div><h3 className="text-sm font-semibold">路由权重</h3><p className="mt-0.5 text-[11px] text-muted-foreground">有效范围 0–10000 · 乐观锁保护配置更新</p></div><span className="font-mono text-[10px] text-muted-foreground">rev 42</span></div>
             <div className="divide-y divide-border">
-              {visibleChannels.map((channel) => <button key={channel.code} onClick={() => setSelected(channel.code)} className={`grid w-full grid-cols-[minmax(150px,1.2fr)_minmax(130px,1fr)_minmax(150px,2fr)_72px] items-center gap-4 px-5 py-3.5 text-left transition-colors hover:bg-muted/50 ${selected === channel.code ? "bg-muted/70" : ""}`}>
+              {visibleChannels.map((channel) => <button key={channel.code} onClick={() => setSelected(channel.code)} className={`grid w-full grid-cols-[1fr_auto] items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50 sm:grid-cols-[minmax(150px,1.2fr)_minmax(130px,1fr)_minmax(150px,2fr)_72px] sm:gap-4 sm:px-5 ${selected === channel.code ? "bg-muted/70" : ""}`}>
                 <div className="min-w-0"><div className="truncate font-mono text-xs">{channel.code}</div><div className="mt-0.5 text-[10px] text-muted-foreground">{channel.provider} · {channel.version}</div></div>
-                <div className="truncate text-xs text-muted-foreground">{channel.merchant}</div>
-                <div className="flex items-center gap-3"><input aria-label={`${channel.code} 路由权重`} type="range" min="0" max="10000" step="100" value={channel.weight} disabled={readOnly || channel.state === "DISABLED"} onClick={(event) => event.stopPropagation()} onChange={(event) => adjustWeight(channel.code, Number(event.target.value))} className="h-1.5 min-w-0 flex-1 accent-primary" /><span className="w-12 text-right font-mono text-xs">{channel.weight}</span></div>
+                <div className="hidden truncate text-xs text-muted-foreground sm:block">{channel.merchant}</div>
+                <div className="order-last col-span-2 flex items-center gap-3 sm:order-none sm:col-span-1"><input aria-label={`${channel.code} 路由权重`} type="range" min="0" max="10000" step="100" value={channel.weight} disabled={readOnly || channel.state === "DISABLED"} onClick={(event) => event.stopPropagation()} onChange={(event) => adjustWeight(channel.code, Number(event.target.value))} className="h-1.5 min-w-0 flex-1 accent-primary" /><span className="w-12 text-right font-mono text-xs">{channel.weight}</span></div>
                 <Status value={channel.state} />
               </button>)}
             </div>
