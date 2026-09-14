@@ -86,7 +86,7 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
             {nav.map(({ to, label, icon: Icon }) => (
               <Link
                 key={to}
-                to={to}
+                to={to as "/"}
                 onClick={() => setOpen(false)}
                 activeOptions={{ exact: to === "/" }}
                 className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
