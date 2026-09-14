@@ -2476,6 +2476,8 @@ body {
 .gateway-modal__danger-actions { display: flex; justify-content: flex-end; gap: 9px; width: 100%; max-width: 420px; margin: 14px auto 0; padding-top: 12px; border-top: 1px solid var(--gateway-line-soft); }
 .gateway-modal__danger-actions .btn { color: var(--gateway-red); border-color: rgba(237,123,123,.35); }
 .gateway-modal__archived { padding: 32px 20px; text-align: center; color: var(--gateway-muted); font-size: 13px; }
+.gateway-modal .form input[type="checkbox"] { width: auto; min-height: auto; height: auto; padding: 0; border: 0; background: transparent; margin-right: 8px; vertical-align: middle; accent-color: var(--gateway-cyan); }
+
 
 .gateway-reference .modal-overlay { z-index: 100; background: rgba(2,7,14,.82); backdrop-filter: blur(8px); }
 .gateway-reference .modal { border-color: #25465f; color: var(--gateway-text); background: #091727; }
