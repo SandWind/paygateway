@@ -2437,6 +2437,20 @@ body {
   max-width: 420px;
   margin-top: 14px;
 }
+.gateway-modal .gateway-create-card .gateway-weight-field {
+  align-self: center;
+  justify-content: flex-start;
+  max-width: 420px;
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.gateway-modal .gateway-create-card .gateway-weight-field__heading,
+.gateway-modal .gateway-create-card .gateway-weight-field__scale {
+  padding: 0 2px;
+}
+
 .gateway-modal .gateway-create-card .gateway-form-actions {
   justify-content: flex-end;
   align-self: center;
