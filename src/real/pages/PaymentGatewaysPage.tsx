@@ -344,22 +344,20 @@ export function PaymentGatewaysPage() {
     <section className="gateway-page gateway-reference" data-testid="payment-gateways-page">
       <div className={`gateway-admin-shell${sidebarOpen ? ' sidebar-open' : ''}`}>
         <aside className="gateway-sidebar" aria-label="后台导航">
-          <div className="gateway-sidebar__brand"><span>VB</span><strong>VideoBot</strong></div>
+          <a className="gateway-sidebar__brand" href="/">华语剧场 · 管理后台</a>
           <nav>
-            <a href="#summary"><span aria-hidden="true">⌂</span>工作台</a>
-            <a href="#summary"><span aria-hidden="true">▦</span>订单管理</a>
-            <a href="#providers" className="is-active"><span aria-hidden="true">◇</span>支付管理</a>
-            <a href="#merchants"><span aria-hidden="true">◎</span>商户配置</a>
-            <a href="#channels"><span aria-hidden="true">⇄</span>渠道路由</a>
+            <a href="#summary" className="is-active">支付网关</a>
           </nav>
-          <div className="gateway-sidebar__user"><span>SA</span><div><strong>超级管理员</strong><small>SUPER_ADMIN</small></div></div>
         </aside>
         {sidebarOpen ? <button className="gateway-sidebar-scrim" type="button" aria-label="关闭导航" onClick={() => setSidebarOpen(false)} /> : null}
 
         <main className="gateway-reference__main">
           <header className="gateway-reference__topbar">
             <button type="button" className="gateway-mobile-menu" aria-label="打开导航" onClick={() => setSidebarOpen(true)}>☰</button>
-            <div><span>支付管理</span><b>/</b><strong>支付网关配置</strong></div>
+            <span className="gateway-topbar-identity">
+              {state.status === 'authed' ? (state.admin.display_name || state.admin.email) : '管理员'}
+              {state.status === 'authed' && state.admin.roles.length > 0 ? `（${state.admin.roles.join('、')}）` : ''}
+            </span>
             <div className="gateway-topbar-status"><GatewaySignal state={signalState} label={signalLabel} /><button type="button" onClick={() => void reload()} disabled={phase === 'loading'} aria-label="刷新配置">↻</button></div>
           </header>
 
