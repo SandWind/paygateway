@@ -71,6 +71,13 @@ const navItems = [
   ["凭据版本", KeyRound], ["路由", Settings2], ["恢复中心", RefreshCcw], ["审计日志", FileClock],
 ] as const;
 
+const stats = [
+  { label: "在线渠道", value: "3 / 4", note: "3 个可参与路由", icon: Activity },
+  { label: "有效权重", value: "10,000", note: "确定性加权", icon: RouteIcon },
+  { label: "失败事实", value: "2", note: "1 个停止查单", icon: AlertTriangle },
+  { label: "凭据版本", value: "16", note: "3 个 READY", icon: KeyRound },
+];
+
 function Status({ value }: { value: Channel["state"] | "RETIRED" | "PENDING" }) {
   const tone = value === "READY" ? "text-success bg-success/10 border-success/20" : value === "DRAINING" || value === "PENDING" ? "text-warning bg-warning/10 border-warning/20" : "text-muted-foreground bg-muted border-border";
   return <span className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 font-mono text-[10px] ${tone}`}><span className="size-1.5 rounded-full bg-current" />{value}</span>;
@@ -82,7 +89,7 @@ function Index() {
   const [role, setRole] = useState<"SUPER_ADMIN" | "SUPPORT_OPERATOR">("SUPER_ADMIN");
   const [query, setQuery] = useState("");
   const [channels, setChannels] = useState(initialChannels);
-  const [selected, setSelected] = useState(initialChannels[0].code);
+  const [selected, setSelected] = useState("flrqfpay-primary");
   const [versionOpen, setVersionOpen] = useState(false);
   const [recoveryItem, setRecoveryItem] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -132,7 +139,7 @@ function Index() {
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3"><div><p className="font-mono text-[10px] text-primary">LIVE CONTROL PLANE</p><h2 className="mt-1 text-xl font-semibold">{active}</h2></div><div className="flex items-center gap-2 text-[11px] text-muted-foreground"><span className="size-2 rounded-full bg-success" />网关运行正常 <span className="font-mono">· 14:32:08 CST</span></div></div>
 
           <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="运行摘要">
-            {[["在线渠道", "3 / 4", "3 个可参与路由", Activity], ["有效权重", "10,000", "确定性加权", RouteIcon], ["失败事实", "2", "1 个停止查单", AlertTriangle], ["凭据版本", "16", "3 个 READY", KeyRound]].map(([label, value, note, Icon]) => <article key={label as string} className="rounded-md border border-border bg-card p-4"><div className="flex items-center justify-between text-[11px] text-muted-foreground"><span>{label as string}</span><Icon className="size-4" /></div><div className="mt-2 font-mono text-2xl font-semibold">{value as string}</div><div className={`mt-1 text-[11px] ${label === "失败事实" ? "text-danger" : "text-muted-foreground"}`}>{note as string}</div></article>)}
+            {stats.map(({ label, value, note, icon: Icon }) => <article key={label} className="rounded-md border border-border bg-card p-4"><div className="flex items-center justify-between text-[11px] text-muted-foreground"><span>{label}</span><Icon className="size-4" /></div><div className="mt-2 font-mono text-2xl font-semibold">{value}</div><div className={`mt-1 text-[11px] ${label === "失败事实" ? "text-danger" : "text-muted-foreground"}`}>{note}</div></article>)}
           </section>
 
           <section className="mt-5 overflow-hidden rounded-md border border-border bg-card">
