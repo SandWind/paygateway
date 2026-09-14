@@ -75,7 +75,7 @@ function Recovery() {
                 </p>
                 <div className="mt-3 flex items-center gap-3">
                   <Button
-                    variant="destructive"
+                    variant="danger"
                     size="sm"
                     disabled={readOnly || item.trusted_paid_delivered}
                     onClick={() => open({ id: item.fact_id, label: "重新投递事实", action: "requeue", audit: "ADMIN_PAYMENT_FACT_REQUEUED" })}
@@ -119,7 +119,7 @@ function Recovery() {
                 </p>
                 <div className="mt-3 flex items-center gap-3">
                   <Button
-                    variant="destructive"
+                    variant="danger"
                     size="sm"
                     disabled={readOnly || item.trusted_paid_delivered}
                     onClick={() => open({ id: item.leg_id, label: "恢复渠道腿查单", action: "resume", audit: "ADMIN_PAYMENT_QUERY_RESUMED" })}
@@ -155,7 +155,7 @@ function Recovery() {
           <ReasonBox value={reason} onChange={setReason} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setPending(null)}>取消</Button>
-            <Button variant="destructive" disabled={!reason.trim()} onClick={() => setPending(null)}>确认执行</Button>
+            <Button variant="danger" disabled={!reason.trim()} onClick={() => setPending(null)}>确认执行</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
