@@ -911,9 +911,18 @@ function EditChannelForm({
             <label className="form__label" htmlFor="edit-channel-weight">
               渠道权重
             </label>
-            <output className="gateway-weight-field__value" htmlFor="edit-channel-weight">
-              {routingWeight}
-            </output>
+            <input
+              className="gateway-weight-field__input"
+              data-testid="edit-channel-weight-number"
+              type="number"
+              min="0"
+              max="10000"
+              step="1"
+              inputMode="numeric"
+              aria-label="渠道权重数值"
+              value={routingWeight}
+              onChange={(event) => setRoutingWeight(clampWeight(event.target.value))}
+            />
           </div>
           <input
             id="edit-channel-weight"
