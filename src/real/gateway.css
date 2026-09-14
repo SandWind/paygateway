@@ -2401,7 +2401,7 @@ body {
   width: 100%;
 }
 .gateway-modal .gateway-merchant-form .gateway-form-actions {
-  justify-content: center;
+  justify-content: flex-end;
   width: 100%;
   max-width: 420px;
   margin-top: 8px;
