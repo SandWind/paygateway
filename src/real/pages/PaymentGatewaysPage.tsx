@@ -166,6 +166,8 @@ export function PaymentGatewaysPage() {
   }, [])
   /** 展开配置面板的渠道 */
   const [openChannelId, setOpenChannelId] = useState<string | null>(null)
+  /** 正在提交启停切换的渠道 */
+  const [togglingChannelId, setTogglingChannelId] = useState<string | null>(null)
   /** 新建渠道抽屉（默认收起，避免创建表单长期占据首屏） */
   const [createOpen, setCreateOpen] = useState(false)
   const [providerOpen, setProviderOpen] = useState(false)
